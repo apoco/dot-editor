@@ -1,0 +1,36 @@
+#app {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: auto 1px auto;
+}
+
+#editor {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+#gripper {
+  grid-row: 1;
+  grid-column: 2;
+  cursor: col-resize;
+  position: relative;
+}
+
+#gripper-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  border-style: outset;
+}
+
+#diagram {
+  grid-row: 1;
+  grid-column: 3;
+  padding: 1em;
+}

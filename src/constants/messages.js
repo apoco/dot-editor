@@ -1,0 +1,2 @@
+export const RENDER_RESULT = 'RENDER_RESULT';
+export const SOURCE_CHANGED = 'SOURCE_CHANGED';
