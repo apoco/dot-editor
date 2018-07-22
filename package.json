@@ -20,6 +20,7 @@
   "author": "Jacob Page <jacob.h.page@gmail.com>",
   "main": "./lib/main",
   "dependencies": {
+    "electron-store": "^2.0.0",
     "react": "^16.4.1",
     "react-ace": "^6.1.4",
     "react-dom": "^16.4.1",
