@@ -3,6 +3,7 @@ const { ipcRenderer } = require("electron");
 
 import { RENDER_RESULT, SOURCE_CHANGED } from "../../constants/messages";
 import Editor from "./editor";
+import Diagram from "./diagram";
 import prefs from "../../prefs";
 
 const lineNumRegex = /\bline (\d+)/;
@@ -37,6 +38,8 @@ class AppComponent extends React.Component {
   };
 
   handleSplitterGrab = e => {
+    e.preventDefault();
+
     this.isResizing = true;
     this.resizeStart = e.screenX;
     this.resizePointer = e.pointerId;
@@ -44,6 +47,7 @@ class AppComponent extends React.Component {
   };
 
   handleSplitterMove = e => {
+    e.preventDefault();
     if (!this.isResizing) {
       return;
     }
@@ -54,6 +58,7 @@ class AppComponent extends React.Component {
   };
 
   handleSplitterRelease = e => {
+    e.preventDefault();
     e.currentTarget.releasePointerCapture(this.resizePointer);
 
     this.isResizing = false;
@@ -100,7 +105,7 @@ class AppComponent extends React.Component {
         >
           <div id="gripper-handle" />
         </div>
-        <div id="diagram" dangerouslySetInnerHTML={{ __html: svg }} />
+        <Diagram svg={svg} />
       </div>
     );
   }
