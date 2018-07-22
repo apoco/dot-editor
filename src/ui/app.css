@@ -32,7 +32,7 @@
   grid-row: 1;
   grid-column: 3;
   padding: 1em;
-  overflow: auto;
+  cursor: move;
 }
 
 #canvas {
