@@ -33,6 +33,8 @@
   grid-column: 3;
   padding: 1em;
   cursor: move;
+  overflow: hidden;
+  z-index: -1;  /* Place below gripper */
 }
 
 #canvas {

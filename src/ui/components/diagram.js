@@ -1,11 +1,14 @@
 import * as React from "react";
 
+const SCALING_RATE = 0.001;
+
 class Diagram extends React.Component {
   state = {
     offsetX: 0,
     offsetY: 0,
     dragOffsetX: 0,
-    dragOffsetY: 0
+    dragOffsetY: 0,
+    scale: 1
   };
 
   isDragging = false;
@@ -36,7 +39,7 @@ class Diagram extends React.Component {
       });
     }
   };
-  
+
   handlePointerUp = e => {
     if (e.pointerId === this.dragPointer) {
       const { offsetX, offsetY } = this.state;
@@ -54,8 +57,15 @@ class Diagram extends React.Component {
     }
   };
 
+  handleWheel = e => {
+    e.preventDefault();
+    this.setState({
+      scale: this.state.scale + e.deltaY * SCALING_RATE
+    });
+  };
+
   render() {
-    const { offsetX, offsetY, dragOffsetX, dragOffsetY } = this.state;
+    const { offsetX, offsetY, dragOffsetX, dragOffsetY, scale } = this.state;
 
     return (
       <div
@@ -63,11 +73,13 @@ class Diagram extends React.Component {
         onPointerDown={this.handlePointerDown}
         onPointerMove={this.handlePointerMove}
         onPointerUp={this.handlePointerUp}
+        onWheel={this.handleWheel}
       >
         <svg
           id="canvas"
           transform={`
             translate(${offsetX + dragOffsetX} ${offsetY + dragOffsetY})
+            scale(${scale})
           `}
           dangerouslySetInnerHTML={{ __html: this.props.svg }}
         />
