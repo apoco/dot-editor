@@ -1,25 +1,73 @@
-import * as React from 'react';
+import * as React from "react";
 import AceEditor from "react-ace";
 import "brace/mode/dot";
 import "brace/theme/github";
+import { ipcRenderer } from "electron";
+
+import prefs, { EDITOR_FONT_SIZE } from "../../prefs";
+import { DECREASE_FONT, INCREASE_FONT } from "../../constants/messages";
+
+const MIN_FONT_SIZE = 0;
+const MAX_FONT_SIZE = 100;
 
 export default class Editor extends React.PureComponent {
   static defaultProps = {
-    value: ''
+    value: ""
   };
 
-  render() {
-    return <AceEditor
-      name="editor"
-      mode="dot"
-      theme="github"
-      width="auto"
-      height="auto"
-      focus={true}
-      debounceChangePeriod={500}
-      annotations={this.props.annotations}
-      value={this.props.value}
-      onChange={this.props.onChange}
-    />;
+  constructor() {
+    super();
+
+    this.state = {
+      fontSize: prefs.get(EDITOR_FONT_SIZE, 12)
+    };
   }
-};
+
+  componentDidMount() {
+    ipcRenderer
+      .on(DECREASE_FONT, this.decreaseFontSize)
+      .on(INCREASE_FONT, this.increaseFontSize);
+  }
+
+  componentWillUnmount() {
+    ipcRenderer
+      .removeListener(DECREASE_FONT, this.decreaseFontSize)
+      .removeListener(INCREASE_FONT, this.increaseFontSize);
+  }
+
+  decreaseFontSize = () => {
+    this.updateFontSize(-1);
+  };
+
+  increaseFontSize = () => {
+    this.updateFontSize(+1);
+  };
+
+  updateFontSize(delta) {
+    const newSize = this.state.fontSize + delta;
+    this.setState({
+      fontSize: Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, newSize))
+    });
+    prefs.set(EDITOR_FONT_SIZE, newSize);
+  }
+
+  render() {
+    const { width, annotations, value, onChange } = this.props;
+
+    return (
+      <AceEditor
+        name="editor"
+        mode="dot"
+        theme="github"
+        width={`${width}px`}
+        height="auto"
+        fontSize={this.state.fontSize}
+        focus={true}
+        debounceChangePeriod={500}
+        annotations={annotations}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+}

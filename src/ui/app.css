@@ -34,3 +34,7 @@
   padding: 1em;
   overflow: auto;
 }
+
+#canvas {
+  overflow: visible;
+}

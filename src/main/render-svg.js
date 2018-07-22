@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 
-import stringReadable from './string-readable';
+import createStringStream from './string-stream';
 import ExecutionError from '../errors/execution';
 import FailedOutputError from '../errors/failed-output';
 
@@ -31,6 +31,6 @@ export default async function renderSvg(code) {
     proc.stderr.on('data', chunk => errChunks.push(chunk));
     proc.stdout.on('data', chunk => outputChunks.push(chunk));
 
-    stringReadable(code).pipe(proc.stdin);
+    createStringStream(code).pipe(proc.stdin);
   });
 }

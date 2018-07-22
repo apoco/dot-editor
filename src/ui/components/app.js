@@ -4,10 +4,9 @@ const { ipcRenderer } = require("electron");
 import { RENDER_RESULT, SOURCE_CHANGED } from "../../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
-import prefs from "../../prefs";
+import prefs, { EDITOR_WIDTH } from "../../prefs";
 
 const lineNumRegex = /\bline (\d+)/;
-const EDITOR_WIDTH_PREF = "layouts.horizontal.editorWidth";
 
 class AppComponent extends React.Component {
   constructor() {
@@ -17,7 +16,7 @@ class AppComponent extends React.Component {
       code: "",
       svg: "",
       errors: "",
-      editorWidth: prefs.get(EDITOR_WIDTH_PREF, 500),
+      editorWidth: prefs.get(EDITOR_WIDTH, 500),
       resizeDelta: 0
     };
 
@@ -69,7 +68,7 @@ class AppComponent extends React.Component {
       resizeDelta: 0
     });
 
-    prefs.set(EDITOR_WIDTH_PREF, newWidth);
+    prefs.set(EDITOR_WIDTH, newWidth);
   };
 
   parseErrors() {
@@ -83,18 +82,21 @@ class AppComponent extends React.Component {
   }
 
   render() {
-    const { code, svg, editorWidth, resizeDelta } = this.state;
+    const { code, fontSize, svg, editorWidth, resizeDelta } = this.state;
+    const effectiveEditorWidth = editorWidth + resizeDelta;
 
     return (
       <div
         id="app"
         style={{
-          gridTemplateColumns: `${editorWidth + resizeDelta}px 1px auto`
+          gridTemplateColumns: `${effectiveEditorWidth}px 1px auto`
         }}
       >
         <Editor
           value={code}
           annotations={this.parseErrors()}
+          fontSize={fontSize}
+          width={editorWidth}
           onChange={this.handleChange}
         />
         <div

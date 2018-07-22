@@ -1,2 +1,4 @@
 export const RENDER_RESULT = 'RENDER_RESULT';
 export const SOURCE_CHANGED = 'SOURCE_CHANGED';
+export const DECREASE_FONT = 'DECREASE_FONT';
+export const INCREASE_FONT = 'INCREASE_FONT';

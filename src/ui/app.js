@@ -2,4 +2,4 @@ import * as React from 'react';
 import { render } from 'react-dom';
 import App from './components/app';
 
-render(<App/>, document.querySelector('body'));
+render(<App/>, document.querySelector('#mount'));
