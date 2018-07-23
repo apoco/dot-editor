@@ -1,11 +1,19 @@
+import { promisify } from "util";
+import fs from "fs";
 import * as React from "react";
-const { ipcRenderer } = require("electron");
+import { dialog, ipcRenderer } from "electron";
 
-import { RENDER_RESULT, SOURCE_CHANGED } from "../../constants/messages";
+import {
+  RENDER_RESULT,
+  SAVE_DOT_FILE,
+  SOURCE_CHANGED
+} from "../../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
 import prefs, { EDITOR_WIDTH } from "../../prefs";
+import IPC from "./ipc";
 
+const writeFile = promisify(fs.writeFile);
 const lineNumRegex = /\bline (\d+)/;
 
 class AppComponent extends React.Component {
@@ -17,7 +25,9 @@ class AppComponent extends React.Component {
       svg: "",
       errors: "",
       editorWidth: prefs.get(EDITOR_WIDTH, 500),
-      resizeDelta: 0
+      resizeDelta: 0,
+      filename: "",
+      isDirty: false
     };
 
     this.isResizing = false;
@@ -25,15 +35,25 @@ class AppComponent extends React.Component {
     this.resizeStart = null;
   }
 
-  componentDidMount() {
-    ipcRenderer.on(RENDER_RESULT, (e, { svg, errors }) => {
-      this.setState(svg ? { svg, errors } : { errors });
-    });
-  }
-
   handleChange = code => {
     ipcRenderer.send(SOURCE_CHANGED, code);
-    this.setState({ code });
+    this.setState({ code, isDirty: true });
+  };
+
+  handleRender = (e, { svg, errors }) => {
+    this.setState(svg ? { svg, errors } : { errors });
+  };
+
+  handleSave = async (e, filename) => {
+    try {
+      await writeFile(filename, this.state.code);
+      this.setState({
+        isDirty: false,
+        filename
+      });
+    } catch (err) {
+      dialog.showErrorBox("Save Error", `Unable to save file.\n\n${err.stack}`);
+    }
   };
 
   handleSplitterGrab = e => {
@@ -92,6 +112,12 @@ class AppComponent extends React.Component {
           gridTemplateColumns: `${effectiveEditorWidth}px 1px auto`
         }}
       >
+        <IPC
+          {...{
+            [RENDER_RESULT]: this.handleRender,
+            [SAVE_DOT_FILE]: this.handleSave
+          }}
+        />
         <Editor
           value={code}
           annotations={this.parseErrors()}
