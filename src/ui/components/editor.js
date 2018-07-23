@@ -2,7 +2,7 @@ import * as React from "react";
 import AceEditor from "react-ace";
 import "brace/mode/dot";
 import "brace/theme/github";
-import { ipcRenderer } from "electron";
+import classNames from "classnames";
 
 import prefs, { EDITOR_FONT_SIZE } from "../../prefs";
 import { DECREASE_FONT, INCREASE_FONT } from "../../constants/messages";
@@ -41,28 +41,30 @@ export default class Editor extends React.PureComponent {
   }
 
   render() {
-    const { width, annotations, value, onChange } = this.props;
+    const { name, isActive, width, annotations, value, onChange } = this.props;
 
     return (
-      <React.Fragment>
-        <IPC { ... {
-          [DECREASE_FONT]: this.decreaseFontSize,
-          [INCREASE_FONT]: this.increaseFontSize
-        } }/>
+      <div className={classNames("editor", { active: isActive })}>
+        <IPC
+          {...{
+            [DECREASE_FONT]: this.decreaseFontSize,
+            [INCREASE_FONT]: this.increaseFontSize
+          }}
+        />
         <AceEditor
-          name="editor"
+          name={name}
           mode="dot"
           theme="github"
           width={`${width}px`}
-          height="auto"
+          height="100%"
           fontSize={this.state.fontSize}
-          focus={true}
+          focus={isActive}
           debounceChangePeriod={500}
           annotations={annotations}
           value={value}
           onChange={onChange}
         />
-      </React.Fragment>
+      </div>
     );
   }
 }

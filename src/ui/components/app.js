@@ -2,6 +2,7 @@ import { promisify } from "util";
 import fs from "fs";
 import * as React from "react";
 import { dialog, ipcRenderer } from "electron";
+import classNames from "classnames";
 
 import {
   NEW_TAB,
@@ -14,6 +15,7 @@ import Editor from "./editor";
 import Diagram from "./diagram";
 import prefs, { EDITOR_WIDTH } from "../../prefs";
 import IPC from "./ipc";
+import TabStrip from "./tab-strip";
 
 const writeFile = promisify(fs.writeFile);
 const lineNumRegex = /\bline (\d+)/;
@@ -24,6 +26,7 @@ class AppComponent extends React.Component {
 
     this.state = {
       activeTabId: null,
+      tabOrder: [],
       tabs: {},
       editorWidth: prefs.get(EDITOR_WIDTH, 500),
       resizeDelta: 0
@@ -39,11 +42,14 @@ class AppComponent extends React.Component {
   }
 
   handleNewTab = tab => {
+    const { tabs, tabOrder } = this.state;
+
     this.setState({
       activeTabId: tab.tabId,
+      tabOrder: tabOrder.concat(tab.tabId),
       tabs: {
-        ...this.state.tabs,
-        [tab.id]: tab
+        ...tabs,
+        [tab.tabId]: tab
       }
     });
   };
@@ -126,6 +132,13 @@ class AppComponent extends React.Component {
     prefs.set(EDITOR_WIDTH, newWidth);
   };
 
+  handleTabSelection = (tabId, e) => {
+    e.preventDefault();
+    this.setState({
+      activeTabId: tabId
+    });
+  };
+
   parseErrors(errors) {
     return (errors || "").split(/\r?\n/).map(err => {
       const lineMatch = lineNumRegex.exec(err);
@@ -134,15 +147,82 @@ class AppComponent extends React.Component {
     });
   }
 
+  renderIPC() {
+    return (
+      <IPC
+        {...{
+          [NEW_TAB]: this.handleNewTab,
+          [RENDER_RESULT]: this.handleRender,
+          [SAVE_DOT_FILE]: this.handleSave
+        }}
+      />
+    );
+  }
+
+  renderTabStrip() {
+    const { tabs, tabOrder, activeTabId } = this.state;
+
+    return (
+      <TabStrip
+        tabs={tabOrder.map(id => tabs[id])}
+        activeTabId={activeTabId}
+        onTabSelected={this.handleTabSelection}
+      />
+    );
+  }
+
+  renderEditors() {
+    const { tabs, activeTabId, fontSize, editorWidth } = this.state;
+
+    return (
+      <div id="editors">
+        {Object.values(tabs).map(({ tabId, code, errors }) => (
+          <Editor
+            key={`editor-${tabId}`}
+            name={`editor-${tabId}`}
+            isActive={tabId === activeTabId}
+            value={code}
+            annotations={this.parseErrors(errors)}
+            fontSize={fontSize}
+            width={editorWidth}
+            onChange={this.handleChange}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  renderSplitter() {
+    return (
+      <div
+        id="gripper"
+        onPointerDown={this.handleSplitterGrab}
+        onPointerMove={this.handleSplitterMove}
+        onPointerUp={this.handleSplitterRelease}
+      >
+        <div id="gripper-handle" />
+      </div>
+    );
+  }
+
+  renderDiagrams() {
+    const { tabs, activeTabId } = this.state;
+
+    return (
+      <div id="diagrams">
+        {Object.values(tabs).map(({ tabId, svg }) => (
+          <Diagram
+            key={`diagram-${tabId}`}
+            className={classNames("diagram", { active: tabId === activeTabId })}
+            svg={svg}
+          />
+        ))}
+      </div>
+    );
+  }
+
   render() {
-    const {
-      tabs,
-      activeTabId,
-      fontSize,
-      editorWidth,
-      resizeDelta
-    } = this.state;
-    const { code, svg, errors } = tabs[activeTabId] || {};
+    const { editorWidth, resizeDelta } = this.state;
     const effectiveEditorWidth = editorWidth + resizeDelta;
 
     return (
@@ -152,29 +232,11 @@ class AppComponent extends React.Component {
           gridTemplateColumns: `${effectiveEditorWidth}px 1px auto`
         }}
       >
-        <IPC
-          {...{
-            [NEW_TAB]: this.handleNewTab,
-            [RENDER_RESULT]: this.handleRender,
-            [SAVE_DOT_FILE]: this.handleSave
-          }}
-        />
-        <Editor
-          value={code}
-          annotations={this.parseErrors(errors)}
-          fontSize={fontSize}
-          width={editorWidth}
-          onChange={this.handleChange}
-        />
-        <div
-          id="gripper"
-          onPointerDown={this.handleSplitterGrab}
-          onPointerMove={this.handleSplitterMove}
-          onPointerUp={this.handleSplitterRelease}
-        >
-          <div id="gripper-handle" />
-        </div>
-        <Diagram svg={svg} />
+        {this.renderIPC()}
+        {this.renderTabStrip()}
+        {this.renderEditors()}
+        {this.renderSplitter()}
+        {this.renderDiagrams()}
       </div>
     );
   }

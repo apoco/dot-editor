@@ -4,7 +4,7 @@ import { BrowserWindow, ipcMain } from "electron";
 
 import {
   DECREASE_FONT,
-  INCREASE_FONT,
+  INCREASE_FONT, NEW_TAB,
   WINDOW_CLOSED,
   WINDOW_READY
 } from "../constants/messages";
@@ -43,6 +43,7 @@ class WindowSession extends SessionManager {
     this.handleMenuEvent(DECREASE_FONT, () =>
       this.webContents.send(DECREASE_FONT)
     );
+    this.handleMenuEvent(NEW_TAB, this.openTab);
 
     this.window.loadFile("lib/ui/index.html");
   }

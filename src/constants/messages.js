@@ -3,6 +3,7 @@ export const WINDOW_READY = 'WINDOW_READY';
 export const WINDOW_CLOSED = 'WINDOW_CLOSED';
 
 export const NEW_TAB = 'NEW_TAB';
+export const CLOSE_TAB = 'CLOSE_TAB';
 
 export const SOURCE_CHANGED = 'SOURCE_CHANGED';
 export const RENDER_RESULT = 'RENDER_RESULT';

@@ -65,23 +65,24 @@ class Diagram extends React.Component {
   };
 
   render() {
+    const { svg, className } = this.props;
     const { offsetX, offsetY, dragOffsetX, dragOffsetY, scale } = this.state;
 
     return (
       <div
-        id="diagram"
+        className={className}
         onPointerDown={this.handlePointerDown}
         onPointerMove={this.handlePointerMove}
         onPointerUp={this.handlePointerUp}
         onWheel={this.handleWheel}
       >
         <svg
-          id="canvas"
+          className="canvas"
           transform={`
             translate(${offsetX + dragOffsetX} ${offsetY + dragOffsetY})
             scale(${scale})
           `}
-          dangerouslySetInnerHTML={{ __html: this.props.svg }}
+          dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
     );
