@@ -1,27 +1,26 @@
 import createMenu from "./menu";
 import createWindowSession from "./window-session";
-import {
-  INCREASE_FONT,
-  NEW_WINDOW,
-  WINDOW_CLOSED
-} from "../constants/messages";
+import SessionManager from "./session-manager";
+import { NEW_WINDOW, WINDOW_CLOSED } from "../constants/messages";
 
-class AppSession {
+class AppSession extends SessionManager {
   menu = null;
   windowSessions = {};
 
   constructor() {
+    super();
+
     this.menu = createMenu();
     this.openWindow();
 
-    this.menu.on(NEW_WINDOW, this.openWindow);
+    this.subscribeToEvent(this.menu, NEW_WINDOW, this.openWindow);
   }
 
   openWindow = () => {
     const windowSession = createWindowSession({ menu: this.menu });
     this.windowSessions[windowSession.id] = windowSession;
 
-    windowSession.once(WINDOW_CLOSED, () =>
+    this.subscribeToEvent(windowSession, WINDOW_CLOSED, () =>
       this.handleWindowClosed(windowSession)
     );
   };

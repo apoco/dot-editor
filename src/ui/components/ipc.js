@@ -4,7 +4,7 @@ import { ipcRenderer } from "electron";
 class IPC extends React.Component {
   componentDidMount() {
     this.forEachChannel(([channel, handler]) => {
-      ipcRenderer.on(channel, handler);
+      ipcRenderer.on(channel, (e, payload) => handler(payload));
     });
   }
 

@@ -2,9 +2,8 @@ import { spawn } from 'child_process';
 
 import createStringStream from './string-stream';
 import ExecutionError from '../errors/execution';
-import FailedOutputError from '../errors/failed-output';
 
-export default async function renderSvg(code) {
+export default async function renderSvg({ code }) {
   return new Promise((resolve, reject) => {
     const outputChunks = [];
     const errChunks = [];

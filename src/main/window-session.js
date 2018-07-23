@@ -1,40 +1,41 @@
-import { EventEmitter } from "events";
 import { fromEvent } from "rxjs";
-import { catchError, debounceTime, filter, flatMap, map } from "rxjs/operators";
+import { filter } from "rxjs/operators";
 import { BrowserWindow, ipcMain } from "electron";
-import uuid from "uuid";
 
-import renderSvg from "./render-svg";
 import {
   DECREASE_FONT,
   INCREASE_FONT,
-  RENDER_RESULT,
-  SOURCE_CHANGED,
-  WINDOW_CLOSED
+  WINDOW_CLOSED,
+  WINDOW_READY
 } from "../constants/messages";
+import SessionManager from "./session-manager";
+import createTabSession from "./tab-session";
 
-class WindowSession extends EventEmitter {
-  id = uuid();
+class WindowSession extends SessionManager {
   window = null;
   webContents = null;
-  subscriptions = [];
+  tabSessions = {};
 
   constructor({ menu }) {
     super();
 
-    const window = new BrowserWindow({ width: 800, height: 600 });
-    window.loadFile("lib/ui/index.html");
-
     this.menu = menu;
-    this.window = window;
-    this.webContents = window.webContents;
+    this.window = new BrowserWindow({ width: 800, height: 600 });
+    this.webContents = this.window.webContents;
 
-    this.subscribeTo(
-      fromEvent(this.webContents, "did-finish-load"),
-      this.setupContent
+    this.subscribeToEvent(
+      this.webContents,
+      "did-finish-load",
+      () => {
+        this.webContents.setZoomFactor(1);
+        this.webContents.setVisualZoomLevelLimits(1, 1);
+        this.webContents.setLayoutZoomLevelLimits(0, 0);
+      }
     );
 
-    this.subscribeTo(fromEvent(window, "closed"), this.handleWindowClosed);
+    this.subscribeToEvent(ipcMain, WINDOW_READY, () => this.openTab());
+
+    this.subscribeToEvent(this.window, "closed", this.dispose);
 
     this.handleMenuEvent(INCREASE_FONT, () =>
       this.webContents.send(INCREASE_FONT)
@@ -42,42 +43,13 @@ class WindowSession extends EventEmitter {
     this.handleMenuEvent(DECREASE_FONT, () =>
       this.webContents.send(DECREASE_FONT)
     );
+
+    this.window.loadFile("lib/ui/index.html");
   }
 
-  setupContent = () => {
-    this.subscribeTo(
-      fromEvent(this.webContents, "did-finish-load"),
-      this.handleWindowLoad
-    );
-
-    this.subscribeTo(
-      this.windowMessages(SOURCE_CHANGED).pipe(
-        debounceTime(5),
-        map(({ event, payload }) => payload),
-        flatMap(renderSvg),
-        catchError(err => ({ errors: err.message }))
-      ),
-      result => {
-        this.webContents.send(RENDER_RESULT, result);
-      }
-    );
-  };
-
-  handleWindowLoad = () => {
-    this.webContents.setZoomFactor(1);
-    this.webContents.setVisualZoomLevelLimits(1, 1);
-    this.webContents.setLayoutZoomLevelLimits(0, 0);
-  };
-
-  handleWindowClosed = () => {
-    this.subscriptions.forEach(s => s.unsubscribe());
-
-    this.window = null;
-    this.webContents = null;
-    this.subscriptions = [];
-    this.menu = null;
-
-    this.emit(WINDOW_CLOSED);
+  openTab = () => {
+    const tabSession = createTabSession({ webContents: this.webContents });
+    this.tabSessions[tabSession.id] = tabSession;
   };
 
   handleMenuEvent(eventName, ...handlers) {
@@ -89,18 +61,25 @@ class WindowSession extends EventEmitter {
     );
   }
 
-  subscribeTo(observable, handler, errHandler, closeHandler) {
-    this.subscriptions.push(
-      observable.subscribe(handler, errHandler, closeHandler)
-    );
-  }
-
   windowMessages(channel) {
     return fromEvent(ipcMain, channel, (event, payload) => ({
       event,
       payload
     })).pipe(filter(({ event }) => event.sender === this.webContents));
   }
+
+  dispose = () => {
+    super.dispose();
+
+    this.window = null;
+    this.webContents = null;
+    this.menu = null;
+
+    Object.values(this.tabSessions).forEach(s => s.dispose());
+    this.tabSessions = {};
+
+    this.emit(WINDOW_CLOSED);
+  };
 }
 
 export default function createWindowSession(opts) {

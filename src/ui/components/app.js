@@ -4,9 +4,11 @@ import * as React from "react";
 import { dialog, ipcRenderer } from "electron";
 
 import {
+  NEW_TAB,
   RENDER_RESULT,
+  SOURCE_CHANGED,
   SAVE_DOT_FILE,
-  SOURCE_CHANGED
+  WINDOW_READY
 } from "../../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
@@ -21,13 +23,10 @@ class AppComponent extends React.Component {
     super();
 
     this.state = {
-      code: "",
-      svg: "",
-      errors: "",
+      activeTabId: null,
+      tabs: {},
       editorWidth: prefs.get(EDITOR_WIDTH, 500),
-      resizeDelta: 0,
-      filename: "",
-      isDirty: false
+      resizeDelta: 0
     };
 
     this.isResizing = false;
@@ -35,16 +34,52 @@ class AppComponent extends React.Component {
     this.resizeStart = null;
   }
 
+  componentDidMount() {
+    ipcRenderer.send(WINDOW_READY, {});
+  }
+
+  handleNewTab = tab => {
+    this.setState({
+      activeTabId: tab.tabId,
+      tabs: {
+        ...this.state.tabs,
+        [tab.id]: tab
+      }
+    });
+  };
+
   handleChange = code => {
-    ipcRenderer.send(SOURCE_CHANGED, code);
-    this.setState({ code, isDirty: true });
+    const { tabs, activeTabId } = this.state;
+
+    ipcRenderer.send(SOURCE_CHANGED, { tabId: activeTabId, code });
+
+    this.setState({
+      tabs: {
+        ...tabs,
+        [activeTabId]: {
+          ...tabs[activeTabId],
+          code,
+          isDirty: true
+        }
+      }
+    });
   };
 
-  handleRender = (e, { svg, errors }) => {
-    this.setState(svg ? { svg, errors } : { errors });
+  handleRender = ({ tabId, svg, errors }) => {
+    const { tabs } = this.state;
+
+    this.setState({
+      tabs: {
+        ...tabs,
+        [tabId]: {
+          ...tabs[tabId],
+          ...(svg ? { svg, errors } : { errors })
+        }
+      }
+    });
   };
 
-  handleSave = async (e, filename) => {
+  handleSave = async ({ filename }) => {
     try {
       await writeFile(filename, this.state.code);
       this.setState({
@@ -91,10 +126,8 @@ class AppComponent extends React.Component {
     prefs.set(EDITOR_WIDTH, newWidth);
   };
 
-  parseErrors() {
-    const { errors } = this.state;
-
-    return errors.split(/\r?\n/).map(err => {
+  parseErrors(errors) {
+    return (errors || "").split(/\r?\n/).map(err => {
       const lineMatch = lineNumRegex.exec(err);
       const line = lineMatch && parseInt(lineMatch[1]);
       return { type: "error", row: line - 1, text: err };
@@ -102,7 +135,14 @@ class AppComponent extends React.Component {
   }
 
   render() {
-    const { code, fontSize, svg, editorWidth, resizeDelta } = this.state;
+    const {
+      tabs,
+      activeTabId,
+      fontSize,
+      editorWidth,
+      resizeDelta
+    } = this.state;
+    const { code, svg, errors } = tabs[activeTabId] || {};
     const effectiveEditorWidth = editorWidth + resizeDelta;
 
     return (
@@ -114,13 +154,14 @@ class AppComponent extends React.Component {
       >
         <IPC
           {...{
+            [NEW_TAB]: this.handleNewTab,
             [RENDER_RESULT]: this.handleRender,
             [SAVE_DOT_FILE]: this.handleSave
           }}
         />
         <Editor
           value={code}
-          annotations={this.parseErrors()}
+          annotations={this.parseErrors(errors)}
           fontSize={fontSize}
           width={editorWidth}
           onChange={this.handleChange}

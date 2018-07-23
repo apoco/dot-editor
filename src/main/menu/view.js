@@ -15,6 +15,7 @@ export default function viewMenu(emit) {
         click: emit(DECREASE_FONT)
       },
       { type: "separator" },
+      { role: "forceReload" },
       { role: "toggledevtools" }
     ]
   };
