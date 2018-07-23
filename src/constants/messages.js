@@ -6,4 +6,5 @@ export const INCREASE_FONT = 'INCREASE_FONT';
 
 export const SAVE_DOT_FILE = 'SAVE_DOT_FILE';
 
+export const NEW_WINDOW = 'NEW_WINDOW';
 export const WINDOW_CLOSED = 'WINDOW_CLOSED';

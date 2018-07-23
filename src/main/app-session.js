@@ -1,6 +1,10 @@
 import createMenu from "./menu";
 import createWindowSession from "./window-session";
-import { INCREASE_FONT, WINDOW_CLOSED } from "../constants/messages";
+import {
+  INCREASE_FONT,
+  NEW_WINDOW,
+  WINDOW_CLOSED
+} from "../constants/messages";
 
 class AppSession {
   menu = null;
@@ -9,16 +13,18 @@ class AppSession {
   constructor() {
     this.menu = createMenu();
     this.openWindow();
+
+    this.menu.on(NEW_WINDOW, this.openWindow);
   }
 
-  openWindow() {
+  openWindow = () => {
     const windowSession = createWindowSession({ menu: this.menu });
     this.windowSessions[windowSession.id] = windowSession;
 
     windowSession.once(WINDOW_CLOSED, () =>
       this.handleWindowClosed(windowSession)
     );
-  }
+  };
 
   handleWindowClosed(windowSession) {
     delete this.windowSessions[windowSession.id];
