@@ -4,7 +4,9 @@ import { BrowserWindow, ipcMain } from "electron";
 
 import {
   DECREASE_FONT,
-  INCREASE_FONT, NEW_TAB,
+  INCREASE_FONT,
+  NEW_TAB, SAVE_BUFFER,
+  SET_ACTIVE_TAB,
   WINDOW_CLOSED,
   WINDOW_READY
 } from "../constants/messages";
@@ -23,17 +25,16 @@ class WindowSession extends SessionManager {
     this.window = new BrowserWindow({ width: 800, height: 600 });
     this.webContents = this.window.webContents;
 
-    this.subscribeToEvent(
-      this.webContents,
-      "did-finish-load",
-      () => {
-        this.webContents.setZoomFactor(1);
-        this.webContents.setVisualZoomLevelLimits(1, 1);
-        this.webContents.setLayoutZoomLevelLimits(0, 0);
-      }
-    );
+    this.subscribeToEvent(this.webContents, "did-finish-load", () => {
+      this.webContents.setZoomFactor(1);
+      this.webContents.setVisualZoomLevelLimits(1, 1);
+      this.webContents.setLayoutZoomLevelLimits(0, 0);
+    });
 
     this.subscribeToEvent(ipcMain, WINDOW_READY, () => this.openTab());
+    this.subscribeToEvent(ipcMain, SET_ACTIVE_TAB, ({ tabId }) =>
+      this.setActiveTab(tabId)
+    );
 
     this.subscribeToEvent(this.window, "closed", this.dispose);
 
@@ -44,6 +45,7 @@ class WindowSession extends SessionManager {
       this.webContents.send(DECREASE_FONT)
     );
     this.handleMenuEvent(NEW_TAB, this.openTab);
+    this.handleMenuEvent(SAVE_BUFFER, this.saveActiveBuffer);
 
     this.window.loadFile("lib/ui/index.html");
   }
@@ -51,6 +53,17 @@ class WindowSession extends SessionManager {
   openTab = () => {
     const tabSession = createTabSession({ webContents: this.webContents });
     this.tabSessions[tabSession.id] = tabSession;
+    this.setActiveTab(tabSession.id);
+  };
+
+  setActiveTab = tabId => {
+    Object.entries(this.tabSessions).forEach(([id, session]) => {
+      session.setIsActive(tabId === id);
+    });
+  };
+
+  saveActiveBuffer = () => {
+    Object.values(this.tabSessions).find(s => s.isActive).save();
   };
 
   handleMenuEvent(eventName, ...handlers) {

@@ -1,9 +1,24 @@
 import { fromEvent } from "rxjs";
-import { catchError, debounceTime, filter, flatMap, map, tap } from "rxjs/operators";
-import { ipcMain } from "electron";
+import {
+  catchError,
+  debounceTime,
+  filter,
+  flatMap,
+  map,
+  tap
+} from "rxjs/operators";
+import { dialog, ipcMain } from "electron";
+
 import SessionManager from "./session-manager";
-import { NEW_TAB, RENDER_RESULT, SOURCE_CHANGED } from "../constants/messages";
 import renderSvg from "./render-svg";
+import writeFile from "./fs/write-file";
+import {
+  NEW_TAB,
+  RENDER_RESULT,
+  SAVE_COMPLETED,
+  SOURCE_CHANGED
+} from "../constants/messages";
+import showSaveDialog from "./dialogs/save";
 
 class TabSession extends SessionManager {
   webContents = null;
@@ -13,6 +28,7 @@ class TabSession extends SessionManager {
   errors = "";
   filename = null;
   isDirty = false;
+  isActive = false;
 
   constructor({ webContents }) {
     super();
@@ -29,6 +45,10 @@ class TabSession extends SessionManager {
 
     this.subscribeTo(
       this.tabEvents(SOURCE_CHANGED).pipe(
+        tap(({ code }) => {
+          this.isDirty = true;
+          this.code = code;
+        }),
         debounceTime(5),
         flatMap(renderSvg),
         catchError(err => ({ errors: err.message }))
@@ -50,6 +70,32 @@ class TabSession extends SessionManager {
 
   sendTabEvent(eventName, payload) {
     return this.webContents.send(eventName, { tabId: this.id, ...payload });
+  }
+
+  setIsActive(isActive) {
+    this.isActive = isActive;
+  }
+
+  async save() {
+    try {
+      if (!this.filename) {
+        const selectedFile = await showSaveDialog("Save As");
+        if (!selectedFile) {
+          return;
+        }
+
+        this.filename = selectedFile;
+      }
+
+      await writeFile(this.filename, this.code);
+      this.isDirty = false;
+      return this.sendTabEvent(SAVE_COMPLETED, {
+        filename: this.filename,
+        tabId: this.id
+      });
+    } catch (err) {
+      dialog.showErrorBox("Error saving", `Could not save file.\n${err.stack}`);
+    }
   }
 
   dispose() {

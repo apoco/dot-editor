@@ -9,7 +9,7 @@ import {
   RENDER_RESULT,
   SOURCE_CHANGED,
   SAVE_DOT_FILE,
-  WINDOW_READY
+  WINDOW_READY, SET_ACTIVE_TAB, SAVE_COMPLETED
 } from "../../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
@@ -85,16 +85,19 @@ class AppComponent extends React.Component {
     });
   };
 
-  handleSave = async ({ filename }) => {
-    try {
-      await writeFile(filename, this.state.code);
-      this.setState({
-        isDirty: false,
-        filename
-      });
-    } catch (err) {
-      dialog.showErrorBox("Save Error", `Unable to save file.\n\n${err.stack}`);
-    }
+  handleSaveCompleted = async ({ filename, tabId }) => {
+    const { tabs } = this.state;
+
+    this.setState({
+      tabs: {
+        ...tabs,
+        [tabId]: {
+          ...tabs[tabId],
+          isDirty: false,
+          filename
+        }
+      }
+    });
   };
 
   handleSplitterGrab = e => {
@@ -134,9 +137,12 @@ class AppComponent extends React.Component {
 
   handleTabSelection = (tabId, e) => {
     e.preventDefault();
+
     this.setState({
       activeTabId: tabId
     });
+
+    ipcRenderer.send(SET_ACTIVE_TAB, { tabId });
   };
 
   parseErrors(errors) {
@@ -153,7 +159,8 @@ class AppComponent extends React.Component {
         {...{
           [NEW_TAB]: this.handleNewTab,
           [RENDER_RESULT]: this.handleRender,
-          [SAVE_DOT_FILE]: this.handleSave
+          [SAVE_DOT_FILE]: this.handleSave,
+          [SAVE_COMPLETED]: this.handleSaveCompleted
         }}
       />
     );
