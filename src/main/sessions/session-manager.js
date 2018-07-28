@@ -6,8 +6,15 @@ class SessionManager extends EventEmitter {
   id = uuid();
   subscriptions = [];
 
-  subscribeToEvent(emitter, event, ...handlers) {
-    return this.subscribeTo(fromEvent(emitter, event), ...handlers);
+  subscribeToEvent(emitter, eventName, ...handlers) {
+    return this.subscribeTo(this.eventsFrom(emitter, eventName), ...handlers);
+  }
+
+  eventsFrom(emitter, eventName) {
+    return fromEvent(emitter, eventName, (event, payload) => ({
+      event,
+      ...payload
+    }));
   }
 
   subscribeTo(observable, ...handlers) {

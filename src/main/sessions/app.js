@@ -1,7 +1,7 @@
-import createMenu from "./menu";
-import createWindowSession from "./window-session";
+import createMenu from "../menu/index";
+import createWindowSession from "./window";
 import SessionManager from "./session-manager";
-import { NEW_WINDOW, WINDOW_CLOSED } from "../constants/messages";
+import { NEW_WINDOW, WINDOW_CLOSED } from "../../constants/messages";
 
 class AppSession extends SessionManager {
   menu = null;

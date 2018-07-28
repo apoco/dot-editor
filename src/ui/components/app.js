@@ -1,8 +1,7 @@
-import { promisify } from "util";
-import fs from "fs";
 import * as React from "react";
-import { dialog, ipcRenderer } from "electron";
+import { ipcRenderer } from "electron";
 import classNames from "classnames";
+import uuid from 'uuid';
 
 import {
   NEW_TAB,
@@ -17,7 +16,6 @@ import prefs, { EDITOR_WIDTH } from "../../prefs";
 import IPC from "./ipc";
 import TabStrip from "./tab-strip";
 
-const writeFile = promisify(fs.writeFile);
 const lineNumRegex = /\bline (\d+)/;
 
 class AppComponent extends React.Component {
@@ -32,16 +30,21 @@ class AppComponent extends React.Component {
       resizeDelta: 0
     };
 
+    this.windowId = uuid();
     this.isResizing = false;
     this.resizePointer = null;
     this.resizeStart = null;
   }
 
   componentDidMount() {
-    ipcRenderer.send(WINDOW_READY, {});
+    ipcRenderer.send(WINDOW_READY, { windowId: this.windowId });
   }
 
   handleNewTab = tab => {
+    if (tab.windowId !== this.windowId) {
+      return;
+    }
+
     const { tabs, tabOrder } = this.state;
 
     this.setState({

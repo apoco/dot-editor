@@ -1,5 +1,5 @@
 import { app } from "electron";
 
-import startAppSession from "./app-session";
+import startAppSession from "./sessions/app";
 
 app.on("ready", startAppSession);

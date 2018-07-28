@@ -5,13 +5,14 @@ import { BrowserWindow, ipcMain } from "electron";
 import {
   DECREASE_FONT,
   INCREASE_FONT,
-  NEW_TAB, SAVE_BUFFER,
+  NEW_TAB,
+  SAVE_BUFFER,
   SET_ACTIVE_TAB,
   WINDOW_CLOSED,
   WINDOW_READY
-} from "../constants/messages";
+} from "../../constants/messages";
 import SessionManager from "./session-manager";
-import createTabSession from "./tab-session";
+import createTabSession from "./tab";
 
 class WindowSession extends SessionManager {
   window = null;
@@ -31,13 +32,23 @@ class WindowSession extends SessionManager {
       this.webContents.setLayoutZoomLevelLimits(0, 0);
     });
 
-    this.subscribeToEvent(ipcMain, WINDOW_READY, () => this.openTab());
-    this.subscribeToEvent(ipcMain, SET_ACTIVE_TAB, ({ tabId }) =>
-      this.setActiveTab(tabId)
+    this.handleIPCEvent(WINDOW_READY, ({ windowId }) => {
+      this.windowId = windowId;
+      this.openTab();
+    });
+
+    this.handleIPCEvent(SET_ACTIVE_TAB, ({ windowId, tabId }) =>
+        windowId === this.windowId && this.setActiveTab(tabId)
     );
 
     this.subscribeToEvent(this.window, "closed", this.dispose);
 
+    this.setupMenuListeners();
+
+    this.window.loadFile("lib/ui/index.html");
+  }
+
+  setupMenuListeners() {
     this.handleMenuEvent(INCREASE_FONT, () =>
       this.webContents.send(INCREASE_FONT)
     );
@@ -46,12 +57,14 @@ class WindowSession extends SessionManager {
     );
     this.handleMenuEvent(NEW_TAB, this.openTab);
     this.handleMenuEvent(SAVE_BUFFER, this.saveActiveBuffer);
-
-    this.window.loadFile("lib/ui/index.html");
   }
 
   openTab = () => {
-    const tabSession = createTabSession({ webContents: this.webContents });
+    console.log('Got new tab event for window', this.windowId);
+    const tabSession = createTabSession({
+      windowId: this.windowId,
+      webContents: this.webContents
+    });
     this.tabSessions[tabSession.id] = tabSession;
     this.setActiveTab(tabSession.id);
   };
@@ -63,7 +76,9 @@ class WindowSession extends SessionManager {
   };
 
   saveActiveBuffer = () => {
-    Object.values(this.tabSessions).find(s => s.isActive).save();
+    Object.values(this.tabSessions)
+      .find(s => s.isActive)
+      .save();
   };
 
   handleMenuEvent(eventName, ...handlers) {
@@ -75,11 +90,13 @@ class WindowSession extends SessionManager {
     );
   }
 
-  windowMessages(channel) {
-    return fromEvent(ipcMain, channel, (event, payload) => ({
-      event,
-      payload
-    })).pipe(filter(({ event }) => event.sender === this.webContents));
+  handleIPCEvent(eventName, ...handlers) {
+    return this.subscribeTo(
+      this.eventsFrom(ipcMain, eventName).pipe(
+        filter(({ event }) => event.sender === this.webContents)
+      ),
+      ...handlers
+    );
   }
 
   dispose = () => {
