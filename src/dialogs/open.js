@@ -9,7 +9,7 @@ export default function showOpenDialog() {
         filters,
         properties: ["openFile"]
       },
-      filePaths => resolve(filePaths[0])
+      filePaths => resolve(filePaths && filePaths[0])
     );
   });
 }

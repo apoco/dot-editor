@@ -61,6 +61,27 @@ class AppComponent extends React.Component {
     });
   };
 
+  handleTabActivation = (e) => {
+    const { windowId, tabId } = e;
+    console.log('Got tab activation event?!', e);
+
+    if (windowId !== this.windowId) {
+      return;
+    }
+
+    const { tabs } = this.state;
+
+    this.setState({
+      activeTabId: tabId,
+      tabs: Object.values(tabs).reduce((allTabs, tab) => Object.assign(allTabs, {
+        [tab.tabId]: {
+          ...tab,
+          isActive: tab.tabId === tabId
+        }
+      }), {})
+    })
+  };
+
   handleCloseTab = ({ tabId, windowId }) => {
     if (windowId !== this.windowId) {
       return;
@@ -230,9 +251,9 @@ class AppComponent extends React.Component {
           [NEW_TAB]: this.handleNewTab,
           [OPEN_FILE]: this.handleOpenFile,
           [RENDER_RESULT]: this.handleRender,
-          [SAVE_DOT_FILE]: this.handleSave,
           [SAVE_COMPLETED]: this.handleSaveCompleted,
-          [CLOSE_TAB]: this.handleCloseTab
+          [CLOSE_TAB]: this.handleCloseTab,
+          [SET_ACTIVE_TAB]: this.handleTabActivation
         }}
       />
     );

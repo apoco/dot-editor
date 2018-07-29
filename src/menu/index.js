@@ -11,7 +11,7 @@ function setupMenu() {
   const emitter = new EventEmitter();
 
   const emit = (eventName, payload) => (menuItem, browserWindow, event) => {
-    emitter.emit(eventName, { menuItem, browserWindow, event, payload });
+    emitter.emit(eventName, event, { menuItem, browserWindow, ...payload });
   };
 
   const menu = Menu.buildFromTemplate([

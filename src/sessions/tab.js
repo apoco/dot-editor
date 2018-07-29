@@ -18,7 +18,7 @@ import {
   NEW_TAB,
   OPEN_FILE,
   RENDER_RESULT,
-  SAVE_COMPLETED,
+  SAVE_COMPLETED, SET_ACTIVE_TAB,
   SOURCE_CHANGED
 } from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
@@ -85,6 +85,10 @@ class TabSession extends SessionManager {
 
   setIsActive(isActive) {
     this.isActive = isActive;
+
+    if (isActive) {
+      this.sendTabEvent(SET_ACTIVE_TAB);
+    }
   }
 
   async open(filename) {

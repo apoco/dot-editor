@@ -1,13 +1,12 @@
 import { fromEvent } from "rxjs";
 import { filter } from "rxjs/operators";
-import { BrowserWindow, dialog, ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 
 import {
   CLOSE_TAB,
   DECREASE_FONT,
   INCREASE_FONT,
   NEW_TAB,
-  OPEN_FILE,
   SAVE_BUFFER,
   SET_ACTIVE_TAB,
   WINDOW_CLOSED,
@@ -15,7 +14,6 @@ import {
 } from "../constants/messages";
 import SessionManager from "./session-manager";
 import createTabSession from "./tab";
-import showOpenDialog from "../dialogs/open";
 
 class WindowSession extends SessionManager {
   window = null;
@@ -47,7 +45,7 @@ class WindowSession extends SessionManager {
         windowId === this.windowId && this.setActiveTab(tabId)
     );
 
-    this.subscribeToEvent(this.window, 'close', this.closeAllTabs);
+    this.subscribeToEvent(this.window, "close", this.closeAllTabs);
     this.subscribeToEvent(this.window, "closed", this.dispose);
 
     this.setupMenuListeners();
@@ -59,7 +57,6 @@ class WindowSession extends SessionManager {
     this.handleMenuEvent(NEW_TAB, this.openTab);
     this.handleMenuEvent(CLOSE_TAB, this.closeTab);
 
-    this.handleMenuEvent(OPEN_FILE, this.showOpenFileDialog);
     this.handleMenuEvent(SAVE_BUFFER, this.saveActiveBuffer);
 
     this.handleMenuEvent(INCREASE_FONT, () =>
@@ -104,17 +101,21 @@ class WindowSession extends SessionManager {
     });
   };
 
-  showOpenFileDialog = async () => {
-    const filename = await showOpenDialog();
-    if (!filename) {
-      return;
+  async openFile(filename) {
+    const existingTab = Object.values(this.tabSessions).find(
+      t => t.filename === filename
+    );
+
+    if (existingTab) {
+      this.setActiveTab(existingTab.id);
+    } else {
+      const activeTab = this.activeTabSession;
+      const targetTab = (activeTab.filename || activeTab.isDirty)
+        ? this.openTab()
+        : activeTab;
+      await targetTab.open(filename);
     }
-
-    let tab = this.activeTabSession;
-    if (tab.filename || tab.isDirty) tab = this.openTab();
-
-    await tab.open(filename);
-  };
+  }
 
   saveActiveBuffer = () => {
     this.activeTabSession.save();
@@ -139,9 +140,13 @@ class WindowSession extends SessionManager {
     return Object.values(this.tabSessions).find(s => s.isActive);
   }
 
+  hasFileOpen(filename) {
+    return Object.values(this.tabSessions).some(t => t.filename === filename);
+  }
+
   handleMenuEvent(eventName, ...handlers) {
     return this.subscribeTo(
-      fromEvent(this.menu, eventName).pipe(
+      this.eventsFrom(this.menu, eventName).pipe(
         filter(({ browserWindow }) => browserWindow === this.window)
       ),
       ...handlers
