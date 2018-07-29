@@ -13,10 +13,10 @@ import {
   SAVE_COMPLETED,
   OPEN_FILE,
   CLOSE_TAB
-} from "../../constants/messages";
+} from "../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
-import prefs, { EDITOR_WIDTH } from "../../prefs";
+import prefs, { EDITOR_WIDTH } from "../prefs/index";
 import IPC from "./ipc";
 import TabStrip from "./tab-strip";
 

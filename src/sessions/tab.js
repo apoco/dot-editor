@@ -10,7 +10,7 @@ import {
 import { dialog, ipcMain } from "electron";
 
 import SessionManager from "./session-manager";
-import renderSvg from "../../utils/render-svg";
+import renderSvg from "../utils/render-svg";
 import readFile from "../fs/read-file";
 import writeFile from "../fs/write-file";
 import {
@@ -20,7 +20,7 @@ import {
   RENDER_RESULT,
   SAVE_COMPLETED,
   SOURCE_CHANGED
-} from "../../constants/messages";
+} from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
 import unsavedChangesPrompt from "../dialogs/unsaved-changes";
 import { CANCEL, YES } from "../dialogs/buttons";

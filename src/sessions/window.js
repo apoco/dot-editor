@@ -12,7 +12,7 @@ import {
   SET_ACTIVE_TAB,
   WINDOW_CLOSED,
   WINDOW_READY
-} from "../../constants/messages";
+} from "../constants/messages";
 import SessionManager from "./session-manager";
 import createTabSession from "./tab";
 import showOpenDialog from "../dialogs/open";
@@ -51,7 +51,7 @@ class WindowSession extends SessionManager {
 
     this.setupMenuListeners();
 
-    this.window.loadFile("lib/ui/index.html");
+    this.window.loadFile("./lib/index.html");
   }
 
   setupMenuListeners() {

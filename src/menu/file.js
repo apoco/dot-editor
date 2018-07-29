@@ -2,7 +2,7 @@ import {
   OPEN_FILE,
   SAVE_BUFFER,
   SAVE_DOT_FILE
-} from "../../constants/messages";
+} from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
 
 function fileMenu(emit) {

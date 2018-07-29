@@ -1,4 +1,4 @@
-import { CLOSE_TAB, NEW_TAB, NEW_WINDOW } from "../../constants/messages";
+import { CLOSE_TAB, NEW_TAB, NEW_WINDOW } from "../constants/messages";
 
 export default function windowMenu(emit) {
   return {

@@ -1,4 +1,4 @@
-import { DECREASE_FONT, INCREASE_FONT } from "../../constants/messages";
+import { DECREASE_FONT, INCREASE_FONT } from "../constants/messages";
 
 export default function viewMenu(emit) {
   return {
