@@ -22,6 +22,7 @@ class TabStrip extends React.Component {
                 key={tabId}
                 onClick={onTabSelected.bind(null, tabId)}
               >
+                &#8234;
                 {tabTitle}
                 {isDirty && " *"}
               </div>
