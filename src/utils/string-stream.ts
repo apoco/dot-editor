@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 
-export default function createStringStream(str) {
+export default function createStringStream(str: string) {
   return new Readable({
     read(size) {
       let wantsMore = true;

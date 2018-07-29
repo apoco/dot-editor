@@ -3,7 +3,8 @@
     "module": "commonjs",
     "target": "es2017",
     "sourceMap": true,
-    "jsx": "react"
+    "jsx": "react",
+    "noImplicitAny": true
   },
   "include": [
     "src/**/*.ts"

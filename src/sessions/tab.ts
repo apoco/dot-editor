@@ -18,31 +18,39 @@ import {
   NEW_TAB,
   OPEN_FILE,
   RENDER_RESULT,
-  SAVE_COMPLETED, SET_ACTIVE_TAB,
+  SAVE_COMPLETED,
+  SET_ACTIVE_TAB,
   SOURCE_CHANGED
 } from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
 import unsavedChangesPrompt from "../dialogs/unsaved-changes";
 import { CANCEL, YES } from "../dialogs/buttons";
+import BrowserWindow = Electron.BrowserWindow;
+import WebContents = Electron.WebContents;
+
+type TabSessionOpts = {
+  windowId: string;
+  window: BrowserWindow;
+};
 
 export default class TabSession extends SessionManager {
-  window = null;
-  windowId = null;
-  webContents = null;
+  window: BrowserWindow = null;
+  windowId: string = null;
+  webContents: WebContents = null;
 
   code = "";
   svg = "";
   errors = "";
-  filename = null;
+  filename: string = null;
   isDirty = false;
   isActive = false;
 
-  constructor({ windowId, window, webContents }) {
+  constructor({ windowId, window }: TabSessionOpts) {
     super();
 
     this.window = window;
     this.windowId = windowId;
-    this.webContents = webContents;
+    this.webContents = window.webContents;
 
     this.sendTabEvent(NEW_TAB, {
       code: this.code,
@@ -66,26 +74,24 @@ export default class TabSession extends SessionManager {
     );
   }
 
-  tabEvents(eventName) {
+  tabEvents(eventName: string) {
     return fromEvent(ipcMain, eventName).pipe(
       map(([e, payload]) => payload),
       filter(({ tabId }) => tabId === this.id)
     );
   }
 
-  handleTabEvent(eventName, ...handlers) {
-    return this.subscribeTo(this.tabEvents(eventName), ...handlers);
+  sendTabEvent<T extends object>(eventName: string, payload?: T) {
+    return this.webContents.send(
+      eventName,
+      Object.assign({}, payload, {
+        tabId: this.id,
+        windowId: this.windowId
+      })
+    );
   }
 
-  sendTabEvent(eventName, payload?) {
-    return this.webContents.send(eventName, {
-      tabId: this.id,
-      windowId: this.windowId,
-      ...payload
-    });
-  }
-
-  setIsActive(isActive) {
+  setIsActive(isActive: boolean) {
     this.isActive = isActive;
 
     if (isActive) {
@@ -93,9 +99,9 @@ export default class TabSession extends SessionManager {
     }
   }
 
-  async open(filename) {
+  async open(filename: string) {
     this.filename = filename;
-    this.code = await readFile(filename, 'utf8');
+    this.code = await readFile(filename, "utf8");
     this.isDirty = false;
 
     const { svg, errors } = await renderSvg({ code: this.code });

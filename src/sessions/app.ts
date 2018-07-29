@@ -1,12 +1,13 @@
 import createMenu from "../menu/index";
-import createWindowSession from "./window";
 import SessionManager from "./session-manager";
 import { NEW_WINDOW, OPEN_FILE, WINDOW_CLOSED } from "../constants/messages";
 import showOpenDialog from "../dialogs/open";
 import WindowSession from "./window";
+import EventEmitter = NodeJS.EventEmitter;
+import BrowserWindow = Electron.BrowserWindow;
 
 class AppSession extends SessionManager {
-  menu = null;
+  menu: EventEmitter = null;
   windowSessions: { [sessionId: string]: WindowSession } = {};
 
   constructor() {
@@ -30,27 +31,32 @@ class AppSession extends SessionManager {
     return windowSession;
   };
 
-  showOpenDialog = async ({ browserWindow }) => {
+  showOpenDialog = async ({
+    browserWindow
+  }: {
+    browserWindow: BrowserWindow;
+  }) => {
     const filename = await showOpenDialog();
     if (!filename) {
       return;
     }
 
     const windowSessions = Object.values(this.windowSessions);
-    const target = windowSessions.find(w => w.hasFileOpen(filename))
-       || windowSessions.find(w => w.window === browserWindow)
-       || this.openWindow();
+    const target =
+      windowSessions.find(w => w.hasFileOpen(filename)) ||
+      windowSessions.find(w => w.window === browserWindow) ||
+      this.openWindow();
 
     await target.openFile(filename);
     target.window.focus();
   };
 
-  handleWindowClosed(windowSession) {
+  handleWindowClosed(windowSession: WindowSession) {
     delete this.windowSessions[windowSession.id];
   }
 
-  subscribeToMenuEvent(eventName, ...handlers) {
-    return this.subscribeToEvent(this.menu, eventName, ...handlers);
+  subscribeToMenuEvent<T>(eventName: string, handler: (event: T) => void) {
+    return this.subscribeToEvent(this.menu, eventName, handler);
   }
 }
 

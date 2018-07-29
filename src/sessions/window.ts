@@ -13,16 +13,23 @@ import {
 } from "../constants/messages";
 import SessionManager from "./session-manager";
 import TabSession from "./tab";
+import EventEmitter = NodeJS.EventEmitter;
+import WebContents = Electron.WebContents;
+import { Subscription } from "rxjs";
+
+type WindowSessionOpts = {
+  menu: EventEmitter;
+};
 
 class WindowSession extends SessionManager {
-  menu = null;
-  window = null;
-  windowId = null;
-  webContents = null;
+  menu: EventEmitter = null;
+  window: BrowserWindow = null;
+  windowId: string = null;
+  webContents: WebContents = null;
   tabSessions: { [sessionId: string]: TabSession } = {};
-  tabSubscriptions = {};
+  tabSubscriptions: { [sessionId: string]: Array<Subscription> } = {};
 
-  constructor({ menu }) {
+  constructor({ menu }: WindowSessionOpts) {
     super();
 
     this.menu = menu;
@@ -71,8 +78,7 @@ class WindowSession extends SessionManager {
   openTab = () => {
     const tabSession = new TabSession({
       window: this.window,
-      windowId: this.windowId,
-      webContents: this.webContents
+      windowId: this.windowId
     });
     this.tabSessions[tabSession.id] = tabSession;
     this.setActiveTab(tabSession.id);
@@ -90,19 +96,19 @@ class WindowSession extends SessionManager {
     return this.activeTabSession.close();
   };
 
-  handleTabClosed = tabId => {
+  handleTabClosed = (tabId: string) => {
     this.tabSubscriptions[tabId].forEach(s => s.unsubscribe());
     delete this.tabSessions[tabId];
     delete this.tabSubscriptions[tabId];
   };
 
-  setActiveTab = tabId => {
+  setActiveTab = (tabId: string) => {
     Object.entries(this.tabSessions).forEach(([id, session]) => {
       session.setIsActive(tabId === id);
     });
   };
 
-  async openFile(filename) {
+  async openFile(filename: string) {
     const existingTab = Object.values(this.tabSessions).find(
       t => t.filename === filename
     );
@@ -121,7 +127,7 @@ class WindowSession extends SessionManager {
     return this.activeTabSession.save();
   };
 
-  closeAllTabs = async ({ event }) => {
+  closeAllTabs = async ({ event }: { event: Event }) => {
     if (!Object.values(this.tabSessions).length) {
       return; // Close normally
     }
@@ -140,25 +146,25 @@ class WindowSession extends SessionManager {
     return Object.values(this.tabSessions).find(s => s.isActive);
   }
 
-  hasFileOpen(filename) {
+  hasFileOpen(filename: string) {
     return Object.values(this.tabSessions).some(t => t.filename === filename);
   }
 
-  handleMenuEvent(eventName, ...handlers) {
+  handleMenuEvent<T>(eventName: string, handler: (event: T) => void) {
     return this.subscribeTo(
       this.eventsFrom(this.menu, eventName).pipe(
         filter(({ browserWindow }) => browserWindow === this.window)
       ),
-      ...handlers
+      handler
     );
   }
 
-  handleIPCEvent(eventName, ...handlers) {
+  handleIPCEvent<T>(eventName: string, handler: (event: T) => void) {
     return this.subscribeTo(
       this.eventsFrom(ipcMain, eventName).pipe(
         filter(({ event }) => event.sender === this.webContents)
       ),
-      ...handlers
+      handler
     );
   }
 

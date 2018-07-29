@@ -7,11 +7,16 @@ import viewMenu from "./view";
 import windowMenu from "./window";
 import helpMenu from "./help";
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+import Emitter from "./emitter";
 
 function setupMenu() {
   const emitter = new EventEmitter();
 
-  const emit = (eventName, payload) => (menuItem, browserWindow, event) => {
+  const emit: Emitter = (eventName, payload) => (
+    menuItem,
+    browserWindow,
+    event
+  ) => {
     emitter.emit(eventName, event, { menuItem, browserWindow, ...payload });
   };
 

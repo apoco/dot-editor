@@ -1,24 +1,41 @@
 import { EventEmitter } from "events";
-import { fromEvent } from "rxjs";
+import { fromEvent, Observable, Subscription } from "rxjs";
 import { v4 as uuid } from "uuid";
+import { FromEventTarget } from "rxjs/internal/observable/fromEvent";
 
 class SessionManager extends EventEmitter {
   id = uuid();
-  subscriptions = [];
+  subscriptions: Array<Subscription> = [];
 
-  subscribeToEvent(emitter, eventName, ...handlers) {
-    return this.subscribeTo(this.eventsFrom(emitter, eventName), ...handlers);
+  subscribeToEvent<T>(
+    emitter: FromEventTarget<T>,
+    eventName: string,
+    next?: (value: T) => void,
+    nextError?: (err: Error) => void,
+    complete?: () => void
+  ) {
+    return this.subscribeTo(
+      this.eventsFrom(emitter, eventName),
+      next,
+      nextError,
+      complete
+    );
   }
 
-  eventsFrom(emitter, eventName) {
+  eventsFrom<T>(emitter: FromEventTarget<T>, eventName: string) {
     return fromEvent(emitter, eventName, (event, payload) => ({
       event,
       ...payload
     }));
   }
 
-  subscribeTo(observable, ...handlers) {
-    const subscription = observable.subscribe(...handlers);
+  subscribeTo<T>(
+    observable: Observable<T>,
+    next?: (value: T) => void,
+    nextError?: (err: Error) => void,
+    complete?: () => void
+  ) {
+    const subscription = observable.subscribe(next, nextError, complete);
 
     this.subscriptions.push(subscription);
 

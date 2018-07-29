@@ -1,12 +1,11 @@
-import {
-  OPEN_FILE,
-  SAVE_BUFFER,
-  SAVE_DOT_FILE
-} from "../constants/messages";
+import { OPEN_FILE, SAVE_BUFFER, SAVE_DOT_FILE } from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+import Emitter from "./emitter";
+import MenuItem = Electron.MenuItem;
+import BrowserWindow = Electron.BrowserWindow;
 
-function fileMenu(emit): MenuItemConstructorOptions {
+function fileMenu(emit: Emitter): MenuItemConstructorOptions {
   return {
     label: "File",
     submenu: [
@@ -23,9 +22,14 @@ function fileMenu(emit): MenuItemConstructorOptions {
       {
         label: "Save As...",
         accelerator: "CmdOrCtrl+Shift+S",
-        click: async (...args) => {
+        click: async (
+          menuItem: MenuItem,
+          window: BrowserWindow,
+          event: Event
+        ) => {
           const filename = await showSaveDialog("Save As");
-          filename && emit(SAVE_DOT_FILE, { filename })(...args);
+          filename &&
+            emit(SAVE_DOT_FILE, { filename })(menuItem, window, event);
         }
       },
       { type: "separator" },
