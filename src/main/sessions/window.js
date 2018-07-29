@@ -3,6 +3,7 @@ import { filter } from "rxjs/operators";
 import { BrowserWindow, dialog, ipcMain } from "electron";
 
 import {
+  CLOSE_TAB,
   DECREASE_FONT,
   INCREASE_FONT,
   NEW_TAB,
@@ -20,6 +21,7 @@ class WindowSession extends SessionManager {
   window = null;
   webContents = null;
   tabSessions = {};
+  tabSubscriptions = {};
 
   constructor({ menu }) {
     super();
@@ -54,6 +56,7 @@ class WindowSession extends SessionManager {
 
   setupMenuListeners() {
     this.handleMenuEvent(NEW_TAB, this.openTab);
+    this.handleMenuEvent(CLOSE_TAB, this.closeTab);
 
     this.handleMenuEvent(OPEN_FILE, this.showOpenFileDialog);
     this.handleMenuEvent(SAVE_BUFFER, this.saveActiveBuffer);
@@ -68,12 +71,30 @@ class WindowSession extends SessionManager {
 
   openTab = () => {
     const tabSession = createTabSession({
+      window: this.window,
       windowId: this.windowId,
       webContents: this.webContents
     });
     this.tabSessions[tabSession.id] = tabSession;
     this.setActiveTab(tabSession.id);
+
+    this.tabSubscriptions[tabSession.id] = [
+      this.subscribeToEvent(tabSession, CLOSE_TAB, () =>
+        this.handleTabClosed(tabSession.id)
+      )
+    ];
+
     return tabSession;
+  };
+
+  closeTab = () => {
+    this.activeTabSession.close();
+  };
+
+  handleTabClosed = tabId => {
+    this.tabSubscriptions[tabId].forEach(s => s.unsubscribe());
+    delete this.tabSessions[tabId];
+    delete this.tabSubscriptions[tabId];
   };
 
   setActiveTab = tabId => {

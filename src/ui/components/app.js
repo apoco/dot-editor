@@ -1,14 +1,18 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
 import classNames from "classnames";
-import uuid from 'uuid';
+import uuid from "uuid";
 
 import {
   NEW_TAB,
   RENDER_RESULT,
   SOURCE_CHANGED,
   SAVE_DOT_FILE,
-  WINDOW_READY, SET_ACTIVE_TAB, SAVE_COMPLETED, OPEN_FILE
+  WINDOW_READY,
+  SET_ACTIVE_TAB,
+  SAVE_COMPLETED,
+  OPEN_FILE,
+  CLOSE_TAB
 } from "../../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
@@ -37,7 +41,7 @@ class AppComponent extends React.Component {
   }
 
   componentDidMount() {
-    ipcRenderer.send(WINDOW_READY, { windowId: this.windowId });
+    this.sendWindowEvent(WINDOW_READY);
   }
 
   handleNewTab = tab => {
@@ -55,6 +59,35 @@ class AppComponent extends React.Component {
         [tab.tabId]: tab
       }
     });
+  };
+
+  handleCloseTab = ({ tabId, windowId }) => {
+    if (windowId !== this.windowId) {
+      return;
+    }
+
+    const { tabs, tabOrder, activeTabId } = this.state;
+
+    const { [tabId]: deletedTab, ...newTabs } = tabs;
+    const newTabOrder = tabOrder.filter(item => item !== tabId);
+    if (!newTabOrder.length) {
+      return void window.close();
+    }
+
+    let newActiveTabId = activeTabId;
+    if (activeTabId === tabId) {
+      const tabIdx = tabOrder.indexOf(tabId);
+      const newTabIdx = Math.min(newTabOrder.length - 1, tabIdx);
+      newActiveTabId = newTabOrder[newTabIdx];
+    }
+
+    this.setState({
+      tabs: newTabs,
+      tabOrder: newTabOrder,
+      activeTabId: newActiveTabId
+    });
+
+    this.sendWindowEvent(SET_ACTIVE_TAB, { tabId: newActiveTabId });
   };
 
   handleOpenFile = ({ tabId, code, filename, svg, errors }) => {
@@ -81,7 +114,7 @@ class AppComponent extends React.Component {
       return;
     }
 
-    ipcRenderer.send(SOURCE_CHANGED, { tabId: activeTabId, code });
+    this.sendTabEvent(SOURCE_CHANGED, { code });
 
     this.setState({
       tabs: {
@@ -160,13 +193,15 @@ class AppComponent extends React.Component {
   };
 
   handleTabSelection = (tabId, e) => {
+    console.log('Changing to tab', tabId);
+
     e.preventDefault();
 
     this.setState({
       activeTabId: tabId
     });
 
-    ipcRenderer.send(SET_ACTIVE_TAB, { tabId });
+    this.sendWindowEvent(SET_ACTIVE_TAB, { tabId });
   };
 
   parseErrors(errors) {
@@ -174,6 +209,17 @@ class AppComponent extends React.Component {
       const lineMatch = lineNumRegex.exec(err);
       const line = lineMatch && parseInt(lineMatch[1]);
       return { type: "error", row: line - 1, text: err };
+    });
+  }
+
+  sendWindowEvent(eventName, payload) {
+    return ipcRenderer.send(eventName, { windowId: this.windowId, ...payload });
+  }
+
+  sendTabEvent(eventName, payload) {
+    return this.sendWindowEvent(eventName, {
+      tabId: this.state.activeTabId,
+      ...payload
     });
   }
 
@@ -185,7 +231,8 @@ class AppComponent extends React.Component {
           [OPEN_FILE]: this.handleOpenFile,
           [RENDER_RESULT]: this.handleRender,
           [SAVE_DOT_FILE]: this.handleSave,
-          [SAVE_COMPLETED]: this.handleSaveCompleted
+          [SAVE_COMPLETED]: this.handleSaveCompleted,
+          [CLOSE_TAB]: this.handleCloseTab
         }}
       />
     );

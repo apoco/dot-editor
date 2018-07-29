@@ -14,6 +14,7 @@ import renderSvg from "../../utils/render-svg";
 import readFile from "../fs/read-file";
 import writeFile from "../fs/write-file";
 import {
+  CLOSE_TAB,
   NEW_TAB,
   OPEN_FILE,
   RENDER_RESULT,
@@ -21,6 +22,8 @@ import {
   SOURCE_CHANGED
 } from "../../constants/messages";
 import showSaveDialog from "../dialogs/save";
+import unsavedChangesPrompt from "../dialogs/unsaved-changes";
+import { CANCEL, YES } from "../dialogs/buttons";
 
 class TabSession extends SessionManager {
   webContents = null;
@@ -32,9 +35,10 @@ class TabSession extends SessionManager {
   isDirty = false;
   isActive = false;
 
-  constructor({ windowId, webContents }) {
+  constructor({ windowId, window, webContents }) {
     super();
 
+    this.window = window;
     this.windowId = windowId;
     this.webContents = webContents;
 
@@ -105,7 +109,7 @@ class TabSession extends SessionManager {
       if (!this.filename) {
         const selectedFile = await showSaveDialog("Save As");
         if (!selectedFile) {
-          return;
+          return false;
         }
 
         this.filename = selectedFile;
@@ -113,10 +117,29 @@ class TabSession extends SessionManager {
 
       await writeFile(this.filename, this.code);
       this.isDirty = false;
-      return this.sendTabEvent(SAVE_COMPLETED, { filename: this.filename });
+      await this.sendTabEvent(SAVE_COMPLETED, { filename: this.filename });
+      return true;
     } catch (err) {
       dialog.showErrorBox("Error saving", `Could not save file.\n${err.stack}`);
+      return false;
     }
+  }
+
+  async close() {
+    if (this.isDirty) {
+      const selection = await unsavedChangesPrompt();
+      if (selection === CANCEL) {
+        return;
+      } else if (selection === YES) {
+        const saved = await this.save();
+        if (!saved) {
+          return;
+        }
+      }
+    }
+
+    await this.sendTabEvent(CLOSE_TAB);
+    this.emit(CLOSE_TAB);
   }
 
   dispose() {
