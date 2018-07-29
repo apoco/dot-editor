@@ -110,7 +110,7 @@ class WindowSession extends SessionManager {
     }
 
     let tab = this.activeTabSession;
-    if (tab.isDirty) tab = this.openTab();
+    if (tab.filename || tab.isDirty) tab = this.openTab();
 
     await tab.open(filename);
   };
