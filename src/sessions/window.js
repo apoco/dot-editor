@@ -47,6 +47,7 @@ class WindowSession extends SessionManager {
         windowId === this.windowId && this.setActiveTab(tabId)
     );
 
+    this.subscribeToEvent(this.window, 'close', this.closeAllTabs);
     this.subscribeToEvent(this.window, "closed", this.dispose);
 
     this.setupMenuListeners();
@@ -117,6 +118,21 @@ class WindowSession extends SessionManager {
 
   saveActiveBuffer = () => {
     this.activeTabSession.save();
+  };
+
+  closeAllTabs = async ({ event }) => {
+    if (!Object.values(this.tabSessions).length) {
+      return; // Close normally
+    }
+
+    event.preventDefault();
+
+    for (let tab of Object.values(this.tabSessions)) {
+      const closed = await tab.close();
+      if (!closed) {
+        return;
+      }
+    }
   };
 
   get activeTabSession() {

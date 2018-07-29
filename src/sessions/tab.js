@@ -129,21 +129,19 @@ class TabSession extends SessionManager {
     if (this.isDirty) {
       const selection = await unsavedChangesPrompt();
       if (selection === CANCEL) {
-        return;
+        return false;
       } else if (selection === YES) {
         const saved = await this.save();
         if (!saved) {
-          return;
+          return false;
         }
       }
     }
 
     await this.sendTabEvent(CLOSE_TAB);
     this.emit(CLOSE_TAB);
-  }
-
-  dispose() {
-    super.dispose();
+    this.dispose();
+    return true;
   }
 }
 
