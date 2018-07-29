@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
-import classNames from "classnames";
+import classNames = require("classnames");
 import { v4 as uuid } from "uuid";
 
 import {
@@ -19,28 +19,30 @@ import prefs, { EDITOR_WIDTH } from "../prefs/index";
 import IPC from "./ipc";
 import TabStrip from "./tab-strip";
 import Tab from "../model/tab";
+import { Annotation } from "react-ace";
+import { PointerEventHandler } from "react";
 
 const lineNumRegex = /\bline (\d+)/;
 
 type Props = {};
 
 type State = {
-  activeTabId: string,
-  tabOrder: Array<string>,
+  activeTabId: string | null;
+  tabOrder: Array<string>;
   tabs: {
-    [tabId: string]: Tab
-  },
-  editorWidth: number,
-  resizeDelta: number
+    [tabId: string]: Tab;
+  };
+  editorWidth: number;
+  resizeDelta: number;
 };
 
 class AppComponent extends React.Component<Props, State> {
   windowId: string;
   isResizing: boolean;
-  resizePointer: string;
-  resizeStart: number;
+  resizePointer: number | null;
+  resizeStart: number | null;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -61,27 +63,32 @@ class AppComponent extends React.Component<Props, State> {
     this.sendWindowEvent(WINDOW_READY);
   }
 
-  handleNewTab = tab => {
-    if (tab.windowId !== this.windowId) {
+  handleNewTab = (tab: Tab & { windowId: string }) => {
+    const { windowId, tabId } = tab;
+
+    if (windowId !== this.windowId) {
       return;
     }
 
     const { tabs, tabOrder } = this.state;
 
     this.setState({
-      activeTabId: tab.tabId,
-      tabOrder: tabOrder.concat(tab.tabId),
+      activeTabId: tabId,
+      tabOrder: tabOrder.concat(tabId),
       tabs: {
         ...tabs,
-        [tab.tabId]: tab
+        [tabId]: tab
       }
     });
   };
 
-  handleTabActivation = (e) => {
-    const { windowId, tabId } = e;
-    console.log('Got tab activation event?!', e);
-
+  handleTabActivation = ({
+    windowId,
+    tabId
+  }: {
+    windowId: string;
+    tabId: string;
+  }) => {
     if (windowId !== this.windowId) {
       return;
     }
@@ -90,16 +97,26 @@ class AppComponent extends React.Component<Props, State> {
 
     this.setState({
       activeTabId: tabId,
-      tabs: Object.values(tabs).reduce((allTabs, tab) => Object.assign(allTabs, {
-        [tab.tabId]: {
-          ...tab,
-          isActive: tab.tabId === tabId
-        }
-      }), {})
-    })
+      tabs: Object.values(tabs).reduce(
+        (allTabs, tab) =>
+          Object.assign(allTabs, {
+            [tab.tabId]: {
+              ...tab,
+              isActive: tab.tabId === tabId
+            }
+          }),
+        {}
+      )
+    });
   };
 
-  handleCloseTab = ({ tabId, windowId }) => {
+  handleCloseTab = ({
+    tabId,
+    windowId
+  }: {
+    tabId: string;
+    windowId: string;
+  }) => {
     if (windowId !== this.windowId) {
       return;
     }
@@ -128,7 +145,7 @@ class AppComponent extends React.Component<Props, State> {
     this.sendWindowEvent(SET_ACTIVE_TAB, { tabId: newActiveTabId });
   };
 
-  handleOpenFile = ({ tabId, code, filename, svg, errors }) => {
+  handleOpenFile = ({ tabId, code, filename, svg, errors }: Tab) => {
     const { tabs } = this.state;
 
     this.setState({
@@ -146,9 +163,9 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleChange = code => {
+  handleChange = (code: string) => {
     const { tabs, activeTabId } = this.state;
-    if (code === tabs[activeTabId].code) {
+    if (!activeTabId || code === tabs[activeTabId].code) {
       return;
     }
 
@@ -166,7 +183,7 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleRender = ({ tabId, svg, errors }) => {
+  handleRender = ({ tabId, svg, errors }: Tab) => {
     const { tabs } = this.state;
 
     this.setState({
@@ -180,7 +197,7 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleSaveCompleted = async ({ filename, tabId }) => {
+  handleSaveCompleted = async ({ filename, tabId }: Tab) => {
     const { tabs } = this.state;
 
     this.setState({
@@ -195,18 +212,19 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleSplitterGrab = e => {
+  handleSplitterGrab: PointerEventHandler = e => {
     e.preventDefault();
 
     this.isResizing = true;
     this.resizeStart = e.screenX;
     this.resizePointer = e.pointerId;
+
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  handleSplitterMove = e => {
+  handleSplitterMove: PointerEventHandler = e => {
     e.preventDefault();
-    if (!this.isResizing) {
+    if (!this.isResizing || typeof this.resizeStart !== "number") {
       return;
     }
 
@@ -215,9 +233,15 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleSplitterRelease = e => {
+  handleSplitterRelease: PointerEventHandler = e => {
     e.preventDefault();
-    e.currentTarget.releasePointerCapture(this.resizePointer);
+    if (e.currentTarget instanceof Element && this.resizePointer) {
+      e.currentTarget.releasePointerCapture(this.resizePointer);
+    }
+
+    if (typeof this.resizeStart !== "number") {
+      return;
+    }
 
     this.isResizing = false;
     const newWidth = this.state.editorWidth + e.screenX - this.resizeStart;
@@ -230,7 +254,7 @@ class AppComponent extends React.Component<Props, State> {
     prefs.set(EDITOR_WIDTH, newWidth);
   };
 
-  handleTabSelection = (tabId, e) => {
+  handleTabSelection = (tabId: string, e: MouseEvent) => {
     e.preventDefault();
 
     this.setState({
@@ -240,23 +264,32 @@ class AppComponent extends React.Component<Props, State> {
     this.sendWindowEvent(SET_ACTIVE_TAB, { tabId });
   };
 
-  parseErrors(errors) {
-    return (errors || "").split(/\r?\n/).map(err => {
+  parseErrors(errors: string | null): Array<Annotation> {
+    if (!errors) {
+      return [];
+    }
+
+    return errors.split(/\r?\n/).map(err => {
       const lineMatch = lineNumRegex.exec(err);
-      const line = lineMatch && parseInt(lineMatch[1]);
-      return { type: "error", row: line - 1, text: err };
+      const line = lineMatch && parseInt(lineMatch[1]) - 1;
+      return { type: "error", row: line || 0, column: 0, text: err };
     });
   }
 
-  sendWindowEvent(eventName, payload?) {
-    return ipcRenderer.send(eventName, { windowId: this.windowId, ...payload });
+  sendWindowEvent<T>(eventName: string, payload?: T) {
+    return ipcRenderer.send(
+      eventName,
+      Object.assign({}, payload, { windowId: this.windowId })
+    );
   }
 
-  sendTabEvent(eventName, payload) {
-    return this.sendWindowEvent(eventName, {
-      tabId: this.state.activeTabId,
-      ...payload
-    });
+  sendTabEvent<T>(eventName: string, payload?: T) {
+    return this.sendWindowEvent(
+      eventName,
+      Object.assign({}, payload, {
+        tabId: this.state.activeTabId
+      })
+    );
   }
 
   renderIPC() {

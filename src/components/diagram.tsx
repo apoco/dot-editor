@@ -1,18 +1,19 @@
 import * as React from "react";
+import { PointerEventHandler, WheelEventHandler } from "react";
 
 const SCALING_RATE = 0.001;
 
 type Props = {
-  svg: string,
-  className: string
+  svg: string;
+  className: string;
 };
 
 type State = {
-  offsetX: number,
-  offsetY: number,
-  dragOffsetX: number,
-  dragOffsetY: number,
-  scale: number
+  offsetX: number;
+  offsetY: number;
+  dragOffsetX: number;
+  dragOffsetY: number;
+  scale: number;
 };
 
 class Diagram extends React.Component<Props, State> {
@@ -29,7 +30,7 @@ class Diagram extends React.Component<Props, State> {
   dragX = null;
   dragY = null;
 
-  handlePointerDown = e => {
+  handlePointerDown: PointerEventHandler = e => {
     e.preventDefault();
 
     Object.assign(this, {
@@ -42,35 +43,37 @@ class Diagram extends React.Component<Props, State> {
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  handlePointerMove = e => {
+  handlePointerMove: PointerEventHandler = e => {
     if (e.pointerId === this.dragPointer && this.isDragging) {
       e.preventDefault();
 
       this.setState({
-        dragOffsetX: e.screenX - this.dragX,
-        dragOffsetY: e.screenY - this.dragY
+        dragOffsetX: e.screenX - (this.dragX || 0),
+        dragOffsetY: e.screenY - (this.dragY || 0)
       });
     }
   };
 
-  handlePointerUp = e => {
-    if (e.pointerId === this.dragPointer) {
-      const { offsetX, offsetY } = this.state;
+  handlePointerUp: PointerEventHandler = e => {
+    const { state, dragPointer } = this;
+
+    if (dragPointer && e.pointerId === dragPointer) {
+      const { offsetX, offsetY } = state;
 
       e.preventDefault();
-      e.currentTarget.releasePointerCapture(this.dragPointer);
+      e.currentTarget.releasePointerCapture(dragPointer);
       this.isDragging = false;
 
       this.setState({
-        offsetX: offsetX + e.screenX - this.dragX,
-        offsetY: offsetY + e.screenY - this.dragY,
+        offsetX: offsetX + e.screenX - (this.dragX || 0),
+        offsetY: offsetY + e.screenY - (this.dragY || 0),
         dragOffsetX: 0,
         dragOffsetY: 0
       });
     }
   };
 
-  handleWheel = e => {
+  handleWheel: WheelEventHandler = e => {
     e.preventDefault();
     this.setState({
       scale: this.state.scale + e.deltaY * SCALING_RATE

@@ -1,11 +1,12 @@
 import * as React from "react";
 import classNames from "classnames";
 import Tab from "../model/tab";
+import { SyntheticEvent } from "react";
 
 type Props = {
   tabs: Array<Tab>,
-  activeTabId: string,
-  onTabSelected: (string, SyntheticClickEvent) => void
+  activeTabId: string | null,
+  onTabSelected: (tabId: string, event: MouseEvent) => void
 }
 
 class TabStrip extends React.Component<Props, {}> {

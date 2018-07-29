@@ -17,7 +17,7 @@ type Props = {
   width: number,
   annotations: Array<Annotation>,
   value: string,
-  onChange: (string) => void
+  onChange: (code: string) => void
 };
 
 type State = {
@@ -29,7 +29,7 @@ export default class Editor extends React.PureComponent<Props, State> {
     value: ""
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -45,7 +45,7 @@ export default class Editor extends React.PureComponent<Props, State> {
     this.updateFontSize(+1);
   };
 
-  updateFontSize(delta) {
+  updateFontSize(delta: number) {
     const newSize = this.state.fontSize + delta;
     this.setState({
       fontSize: Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, newSize))
