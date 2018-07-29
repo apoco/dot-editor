@@ -8,7 +8,7 @@ class SessionManager extends EventEmitter {
   subscriptions: Array<Subscription> = [];
 
   subscribeToEvent<T>(
-    emitter: FromEventTarget<T>,
+    emitter: EventEmitter,
     eventName: string,
     next?: (value: T) => void,
     nextError?: (err: Error) => void,

@@ -7,7 +7,7 @@ import EventEmitter = NodeJS.EventEmitter;
 import BrowserWindow = Electron.BrowserWindow;
 
 class AppSession extends SessionManager {
-  menu: EventEmitter = null;
+  menu: EventEmitter;
   windowSessions: { [sessionId: string]: WindowSession } = {};
 
   constructor() {

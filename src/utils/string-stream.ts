@@ -11,7 +11,7 @@ export default function createStringStream(str: string) {
         }
 
         wantsMore = this.push(chunk);
-        str = str.substr(size);
+        str = str.substr(chunk.length);
       }
     }
   });

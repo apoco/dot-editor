@@ -22,10 +22,10 @@ type WindowSessionOpts = {
 };
 
 class WindowSession extends SessionManager {
-  menu: EventEmitter = null;
-  window: BrowserWindow = null;
-  windowId: string = null;
-  webContents: WebContents = null;
+  menu: EventEmitter;
+  window: BrowserWindow;
+  webContents: WebContents;
+  windowId: string | null = null;
   tabSessions: { [sessionId: string]: TabSession } = {};
   tabSubscriptions: { [sessionId: string]: Array<Subscription> } = {};
 
@@ -42,14 +42,14 @@ class WindowSession extends SessionManager {
       this.webContents.setLayoutZoomLevelLimits(0, 0);
     });
 
-    this.handleIPCEvent(WINDOW_READY, ({ windowId }) => {
+    this.handleIPCEvent(WINDOW_READY, ({ windowId }: { windowId: string }) => {
       this.windowId = windowId;
       this.openTab();
     });
 
     this.handleIPCEvent(
       SET_ACTIVE_TAB,
-      ({ windowId, tabId }) =>
+      ({ windowId, tabId }: { windowId: string; tabId: string }) =>
         windowId === this.windowId && this.setActiveTab(tabId)
     );
 
@@ -76,6 +76,10 @@ class WindowSession extends SessionManager {
   }
 
   openTab = () => {
+    if (!this.windowId) {
+      throw new Error("Window is not properly initialized");
+    }
+
     const tabSession = new TabSession({
       window: this.window,
       windowId: this.windowId
@@ -93,7 +97,8 @@ class WindowSession extends SessionManager {
   };
 
   closeTab = () => {
-    return this.activeTabSession.close();
+    const activeTab = this.activeTabSession;
+    return activeTab && activeTab.close();
   };
 
   handleTabClosed = (tabId: string) => {
@@ -118,13 +123,16 @@ class WindowSession extends SessionManager {
     } else {
       const activeTab = this.activeTabSession;
       const targetTab =
-        activeTab.filename || activeTab.isDirty ? this.openTab() : activeTab;
+        !activeTab || activeTab.filename || activeTab.isDirty
+          ? this.openTab()
+          : activeTab;
       await targetTab.open(filename);
     }
   }
 
   saveActiveBuffer = () => {
-    return this.activeTabSession.save();
+    const activeTab = this.activeTabSession;
+    return activeTab && activeTab.save();
   };
 
   closeAllTabs = async ({ event }: { event: Event }) => {
@@ -142,8 +150,8 @@ class WindowSession extends SessionManager {
     }
   };
 
-  get activeTabSession(): TabSession {
-    return Object.values(this.tabSessions).find(s => s.isActive);
+  get activeTabSession(): TabSession | null {
+    return Object.values(this.tabSessions).find(s => s.isActive) || null;
   }
 
   hasFileOpen(filename: string) {
@@ -170,10 +178,6 @@ class WindowSession extends SessionManager {
 
   dispose() {
     super.dispose();
-
-    this.window = null;
-    this.webContents = null;
-    this.menu = null;
 
     Object.values(this.tabSessions).forEach(s => s.dispose());
     this.tabSessions = {};

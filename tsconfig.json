@@ -4,7 +4,8 @@
     "target": "es2017",
     "sourceMap": true,
     "jsx": "react",
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "strict": true
   },
   "include": [
     "src/**/*.ts"

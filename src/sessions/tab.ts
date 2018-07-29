@@ -34,14 +34,14 @@ type TabSessionOpts = {
 };
 
 export default class TabSession extends SessionManager {
-  window: BrowserWindow = null;
-  windowId: string = null;
-  webContents: WebContents = null;
+  window: BrowserWindow;
+  windowId: string;
+  webContents: WebContents;
 
   code = "";
-  svg = "";
+  svg: string = "";
   errors = "";
-  filename: string = null;
+  filename: string | null = null;
   isDirty = false;
   isActive = false;
 
@@ -62,7 +62,7 @@ export default class TabSession extends SessionManager {
 
     this.subscribeTo(
       this.tabEvents(SOURCE_CHANGED).pipe(
-        tap(({ code }) => {
+        tap(({ code }: { code: string }) => {
           this.isDirty = true;
           this.code = code;
         }),
@@ -74,9 +74,9 @@ export default class TabSession extends SessionManager {
     );
   }
 
-  tabEvents(eventName: string) {
+  tabEvents<T extends { tabId: string }>(eventName: string) {
     return fromEvent(ipcMain, eventName).pipe(
-      map(([e, payload]) => payload),
+      map(([e, payload]: [Event, T]) => payload),
       filter(({ tabId }) => tabId === this.id)
     );
   }
@@ -105,7 +105,7 @@ export default class TabSession extends SessionManager {
     this.isDirty = false;
 
     const { svg, errors } = await renderSvg({ code: this.code });
-    this.svg = svg;
+    this.svg = svg || "";
     this.errors = errors;
 
     this.sendTabEvent(OPEN_FILE, {
