@@ -2,10 +2,14 @@
   grid-row: 1;
   grid-column: 1 / 4;
   position: relative;
+  overflow: hidden;
+}
+
+#tabs {
+  display: flex;
 }
 
 .tab {
-  display: inline-block;
   padding: 0.5em 1em;
   margin: 0.5em 0.125em 3px 0.125em;
   background-color: silver;
@@ -14,6 +18,9 @@
   border-bottom: none;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
 }
 
 .tab.active {

@@ -12,18 +12,23 @@ class TabStrip extends React.Component {
     return (
       <div id="tab-strip">
         <div id='tabs'>
-          {tabs.map(({ tabId, filename, isDirty }) => (
-            <div
-              className={classNames("tab", { active: tabId === activeTabId })}
-              key={tabId}
-              onClick={onTabSelected.bind(null, tabId)}
-            >
-              {filename || "<untitled>"}
-              {isDirty && " *"}
-            </div>
-          ))}
+          {tabs.map(({ tabId, filename, isDirty }) => {
+            const tabTitle = filename || "<untitled>";
+
+            return (
+              <div
+                title={tabTitle}
+                className={classNames("tab", { active: tabId === activeTabId })}
+                key={tabId}
+                onClick={onTabSelected.bind(null, tabId)}
+              >
+                {tabTitle}
+                {isDirty && " *"}
+              </div>
+            );
+          })}
         </div>
-        <div id="tab-strip-border"></div>
+        <div id="tab-strip-border"/>
       </div>
     );
   }
