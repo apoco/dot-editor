@@ -1,3 +1,7 @@
+@import "tabs.css";
+@import "editor.css";
+@import "diagram.css";
+
 #app {
   position: fixed;
   top: 0;
@@ -6,58 +10,6 @@
   right: 0;
   display: grid;
   grid-template-rows: min-content auto;
-}
-
-#tab-strip {
-  grid-row: 1;
-  grid-column: 1 / 4;
-  position: relative;
-}
-
-#tab-strip-border {
-  position: absolute;
-  bottom: 0;
-  height: 3px;
-  left: 0;
-  right: 0;
-  border-top: 1px solid silver;
-  z-index: -1;
-}
-
-.tab {
-  display: inline-block;
-  padding: 0.5em 1em;
-  margin: 0.5em 0.125em 3px 0.125em;
-  background-color: silver;
-  cursor: pointer;
-  border: 1px solid silver;
-  border-bottom: none;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-}
-
-.tab.active {
-  background-color: white;
-  cursor: inherit;
-}
-
-#editors {
-  grid-row: 2;
-  grid-column: 1;
-  position: relative;
-}
-
-.editor {
-  display: none;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
-.editor.active {
-  display: block;
 }
 
 #gripper {
@@ -74,31 +26,4 @@
   bottom: 0;
   right: 0;
   border-style: outset;
-}
-
-#diagrams {
-  grid-row: 2;
-  grid-column: 3;
-  position: relative;
-  z-index: -1;  /* Place below gripper */
-}
-
-.diagram {
-  padding: 1em;
-  cursor: move;
-  overflow: hidden;
-  display: none;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
-.diagram.active {
-  display: block;
-}
-
-.canvas {
-  overflow: visible;
 }

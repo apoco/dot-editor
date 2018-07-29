@@ -1,0 +1,32 @@
+#tab-strip {
+  grid-row: 1;
+  grid-column: 1 / 4;
+  position: relative;
+}
+
+.tab {
+  display: inline-block;
+  padding: 0.5em 1em;
+  margin: 0.5em 0.125em 3px 0.125em;
+  background-color: silver;
+  cursor: pointer;
+  border: 1px solid silver;
+  border-bottom: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.tab.active {
+  background-color: white;
+  cursor: inherit;
+}
+
+#tab-strip-border {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  left: 0;
+  right: 0;
+  border-top: 1px solid silver;
+  z-index: -1;
+}
