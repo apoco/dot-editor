@@ -2,7 +2,20 @@ import * as React from "react";
 
 const SCALING_RATE = 0.001;
 
-class Diagram extends React.Component {
+type Props = {
+  svg: string,
+  className: string
+};
+
+type State = {
+  offsetX: number,
+  offsetY: number,
+  dragOffsetX: number,
+  dragOffsetY: number,
+  scale: number
+};
+
+class Diagram extends React.Component<Props, State> {
   state = {
     offsetX: 0,
     offsetY: 0,

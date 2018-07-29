@@ -1,13 +1,12 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
 import classNames from "classnames";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 
 import {
   NEW_TAB,
   RENDER_RESULT,
   SOURCE_CHANGED,
-  SAVE_DOT_FILE,
   WINDOW_READY,
   SET_ACTIVE_TAB,
   SAVE_COMPLETED,
@@ -19,12 +18,30 @@ import Diagram from "./diagram";
 import prefs, { EDITOR_WIDTH } from "../prefs/index";
 import IPC from "./ipc";
 import TabStrip from "./tab-strip";
+import Tab from "../model/tab";
 
 const lineNumRegex = /\bline (\d+)/;
 
-class AppComponent extends React.Component {
-  constructor() {
-    super();
+type Props = {};
+
+type State = {
+  activeTabId: string,
+  tabOrder: Array<string>,
+  tabs: {
+    [tabId: string]: Tab
+  },
+  editorWidth: number,
+  resizeDelta: number
+};
+
+class AppComponent extends React.Component<Props, State> {
+  windowId: string;
+  isResizing: boolean;
+  resizePointer: string;
+  resizeStart: number;
+
+  constructor(props) {
+    super(props);
 
     this.state = {
       activeTabId: null,
@@ -214,8 +231,6 @@ class AppComponent extends React.Component {
   };
 
   handleTabSelection = (tabId, e) => {
-    console.log('Changing to tab', tabId);
-
     e.preventDefault();
 
     this.setState({
@@ -233,7 +248,7 @@ class AppComponent extends React.Component {
     });
   }
 
-  sendWindowEvent(eventName, payload) {
+  sendWindowEvent(eventName, payload?) {
     return ipcRenderer.send(eventName, { windowId: this.windowId, ...payload });
   }
 
@@ -247,7 +262,7 @@ class AppComponent extends React.Component {
   renderIPC() {
     return (
       <IPC
-        {...{
+        handlers={{
           [NEW_TAB]: this.handleNewTab,
           [OPEN_FILE]: this.handleOpenFile,
           [RENDER_RESULT]: this.handleRender,
@@ -272,7 +287,7 @@ class AppComponent extends React.Component {
   }
 
   renderEditors() {
-    const { tabs, activeTabId, fontSize, editorWidth } = this.state;
+    const { tabs, activeTabId, editorWidth } = this.state;
 
     return (
       <div id="editors">
@@ -283,7 +298,6 @@ class AppComponent extends React.Component {
             isActive={tabId === activeTabId}
             value={code}
             annotations={this.parseErrors(errors)}
-            fontSize={fontSize}
             width={editorWidth}
             onChange={this.handleChange}
           />

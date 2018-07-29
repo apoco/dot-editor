@@ -3,10 +3,11 @@ import createWindowSession from "./window";
 import SessionManager from "./session-manager";
 import { NEW_WINDOW, OPEN_FILE, WINDOW_CLOSED } from "../constants/messages";
 import showOpenDialog from "../dialogs/open";
+import WindowSession from "./window";
 
 class AppSession extends SessionManager {
   menu = null;
-  windowSessions = {};
+  windowSessions: { [sessionId: string]: WindowSession } = {};
 
   constructor() {
     super();
@@ -19,7 +20,7 @@ class AppSession extends SessionManager {
   }
 
   openWindow = () => {
-    const windowSession = createWindowSession({ menu: this.menu });
+    const windowSession = new WindowSession({ menu: this.menu });
     this.windowSessions[windowSession.id] = windowSession;
 
     this.subscribeToEvent(windowSession, WINDOW_CLOSED, () =>

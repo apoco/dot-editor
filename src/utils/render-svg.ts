@@ -3,8 +3,10 @@ import { spawn } from 'child_process';
 import createStringStream from './string-stream';
 import ExecutionError from '../errors/execution';
 
-export default async function renderSvg({ code }) {
-  return new Promise((resolve, reject) => {
+type RenderResult = { svg?: string, errors: string };
+
+export default async function renderSvg({ code }): Promise<RenderResult> {
+  return new Promise<RenderResult>((resolve, reject) => {
     const outputChunks = [];
     const errChunks = [];
 

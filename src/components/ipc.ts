@@ -1,7 +1,13 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
 
-class IPC extends React.Component {
+type Props = {
+  handlers: {
+    [message: string]: (any) => any
+  }
+}
+
+class IPC extends React.Component<Props, {}> {
   componentDidMount() {
     this.forEachChannel(([channel, handler]) => {
       ipcRenderer.on(channel, (e, payload) => handler(payload));
@@ -15,7 +21,7 @@ class IPC extends React.Component {
   }
 
   forEachChannel(cb) {
-    Object.entries(this.props).forEach(cb);
+    Object.entries(this.props.handlers).forEach(cb);
   }
 
   render() {

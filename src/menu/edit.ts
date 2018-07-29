@@ -1,4 +1,6 @@
-export default function editMenu() {
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
+
+export default function editMenu(): MenuItemConstructorOptions {
   return {
     label: "Edit",
     submenu: [

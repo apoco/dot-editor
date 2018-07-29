@@ -1,5 +1,5 @@
 import * as React from "react";
-import AceEditor from "react-ace";
+import AceEditor, { Annotation } from "react-ace";
 import "brace/mode/dot";
 import "brace/theme/github";
 import classNames from "classnames";
@@ -11,13 +11,26 @@ import IPC from "./ipc";
 const MIN_FONT_SIZE = 0;
 const MAX_FONT_SIZE = 100;
 
-export default class Editor extends React.PureComponent {
+type Props = {
+  name: string,
+  isActive: boolean,
+  width: number,
+  annotations: Array<Annotation>,
+  value: string,
+  onChange: (string) => void
+};
+
+type State = {
+  fontSize: number
+};
+
+export default class Editor extends React.PureComponent<Props, State> {
   static defaultProps = {
     value: ""
   };
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
     this.state = {
       fontSize: prefs.get(EDITOR_FONT_SIZE, 12)
@@ -45,12 +58,10 @@ export default class Editor extends React.PureComponent {
 
     return (
       <div className={classNames("editor", { active: isActive })}>
-        <IPC
-          {...{
-            [DECREASE_FONT]: this.decreaseFontSize,
-            [INCREASE_FONT]: this.increaseFontSize
-          }}
-        />
+        <IPC handlers={{
+          [DECREASE_FONT]: this.decreaseFontSize,
+          [INCREASE_FONT]: this.increaseFontSize
+        }}/>
         <AceEditor
           name={name}
           mode="dot"

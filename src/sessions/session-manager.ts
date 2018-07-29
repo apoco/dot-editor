@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { fromEvent } from "rxjs";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 
 class SessionManager extends EventEmitter {
   id = uuid();

@@ -3,6 +3,8 @@
 
 # Build artifacts
 /lib
+*.js
+*.js.map
 
 # Development artifacts
 npm-debug.log*

@@ -1,6 +1,7 @@
 import { CLOSE_TAB, NEW_TAB, NEW_WINDOW } from "../constants/messages";
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 
-export default function windowMenu(emit) {
+export default function windowMenu(emit): MenuItemConstructorOptions {
   return {
     role: "window",
     submenu: [

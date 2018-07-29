@@ -25,7 +25,9 @@ import showSaveDialog from "../dialogs/save";
 import unsavedChangesPrompt from "../dialogs/unsaved-changes";
 import { CANCEL, YES } from "../dialogs/buttons";
 
-class TabSession extends SessionManager {
+export default class TabSession extends SessionManager {
+  window = null;
+  windowId = null;
   webContents = null;
 
   code = "";
@@ -58,7 +60,7 @@ class TabSession extends SessionManager {
         }),
         debounceTime(5),
         flatMap(renderSvg),
-        catchError(err => ({ errors: err.message }))
+        catchError(err => [{ errors: err.message }])
       ),
       result => this.sendTabEvent(RENDER_RESULT, result)
     );
@@ -75,7 +77,7 @@ class TabSession extends SessionManager {
     return this.subscribeTo(this.tabEvents(eventName), ...handlers);
   }
 
-  sendTabEvent(eventName, payload) {
+  sendTabEvent(eventName, payload?) {
     return this.webContents.send(eventName, {
       tabId: this.id,
       windowId: this.windowId,
@@ -148,9 +150,3 @@ class TabSession extends SessionManager {
     return true;
   }
 }
-
-function createTabSession(opts) {
-  return new TabSession(opts);
-}
-
-export default createTabSession;

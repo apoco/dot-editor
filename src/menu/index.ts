@@ -6,6 +6,7 @@ import editMenu from "./edit";
 import viewMenu from "./view";
 import windowMenu from "./window";
 import helpMenu from "./help";
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 
 function setupMenu() {
   const emitter = new EventEmitter();
@@ -16,10 +17,10 @@ function setupMenu() {
 
   const menu = Menu.buildFromTemplate([
     fileMenu(emit),
-    editMenu(emit),
+    editMenu(),
     viewMenu(emit),
     windowMenu(emit),
-    helpMenu(emit)
+    helpMenu()
   ]);
 
   Menu.setApplicationMenu(menu);

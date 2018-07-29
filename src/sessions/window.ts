@@ -1,4 +1,3 @@
-import { fromEvent } from "rxjs";
 import { filter } from "rxjs/operators";
 import { BrowserWindow, ipcMain } from "electron";
 
@@ -13,12 +12,14 @@ import {
   WINDOW_READY
 } from "../constants/messages";
 import SessionManager from "./session-manager";
-import createTabSession from "./tab";
+import TabSession from "./tab";
 
 class WindowSession extends SessionManager {
+  menu = null;
   window = null;
+  windowId = null;
   webContents = null;
-  tabSessions = {};
+  tabSessions: { [sessionId: string]: TabSession } = {};
   tabSubscriptions = {};
 
   constructor({ menu }) {
@@ -46,11 +47,11 @@ class WindowSession extends SessionManager {
     );
 
     this.subscribeToEvent(this.window, "close", this.closeAllTabs);
-    this.subscribeToEvent(this.window, "closed", this.dispose);
+    this.subscribeToEvent(this.window, "closed", this.dispose.bind(this));
 
     this.setupMenuListeners();
 
-    this.window.loadFile("./lib/index.html");
+    this.window.loadFile("./src/index.html");
   }
 
   setupMenuListeners() {
@@ -68,7 +69,7 @@ class WindowSession extends SessionManager {
   }
 
   openTab = () => {
-    const tabSession = createTabSession({
+    const tabSession = new TabSession({
       window: this.window,
       windowId: this.windowId,
       webContents: this.webContents
@@ -86,7 +87,7 @@ class WindowSession extends SessionManager {
   };
 
   closeTab = () => {
-    this.activeTabSession.close();
+    return this.activeTabSession.close();
   };
 
   handleTabClosed = tabId => {
@@ -110,15 +111,14 @@ class WindowSession extends SessionManager {
       this.setActiveTab(existingTab.id);
     } else {
       const activeTab = this.activeTabSession;
-      const targetTab = (activeTab.filename || activeTab.isDirty)
-        ? this.openTab()
-        : activeTab;
+      const targetTab =
+        activeTab.filename || activeTab.isDirty ? this.openTab() : activeTab;
       await targetTab.open(filename);
     }
   }
 
   saveActiveBuffer = () => {
-    this.activeTabSession.save();
+    return this.activeTabSession.save();
   };
 
   closeAllTabs = async ({ event }) => {
@@ -136,7 +136,7 @@ class WindowSession extends SessionManager {
     }
   };
 
-  get activeTabSession() {
+  get activeTabSession(): TabSession {
     return Object.values(this.tabSessions).find(s => s.isActive);
   }
 
@@ -162,7 +162,7 @@ class WindowSession extends SessionManager {
     );
   }
 
-  dispose = () => {
+  dispose() {
     super.dispose();
 
     this.window = null;
@@ -173,9 +173,7 @@ class WindowSession extends SessionManager {
     this.tabSessions = {};
 
     this.emit(WINDOW_CLOSED);
-  };
+  }
 }
 
-export default function createWindowSession(opts) {
-  return new WindowSession(opts);
-}
+export default WindowSession;

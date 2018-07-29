@@ -1,6 +1,7 @@
 import { DECREASE_FONT, INCREASE_FONT } from "../constants/messages";
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 
-export default function viewMenu(emit) {
+export default function viewMenu(emit): MenuItemConstructorOptions {
   return {
     label: "View",
     submenu: [

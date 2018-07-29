@@ -4,8 +4,9 @@ import {
   SAVE_DOT_FILE
 } from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
+import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 
-function fileMenu(emit) {
+function fileMenu(emit): MenuItemConstructorOptions {
   return {
     label: "File",
     submenu: [
