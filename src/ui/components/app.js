@@ -8,7 +8,7 @@ import {
   RENDER_RESULT,
   SOURCE_CHANGED,
   SAVE_DOT_FILE,
-  WINDOW_READY, SET_ACTIVE_TAB, SAVE_COMPLETED
+  WINDOW_READY, SET_ACTIVE_TAB, SAVE_COMPLETED, OPEN_FILE
 } from "../../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
@@ -57,8 +57,29 @@ class AppComponent extends React.Component {
     });
   };
 
+  handleOpenFile = ({ tabId, code, filename, svg, errors }) => {
+    const { tabs } = this.state;
+
+    this.setState({
+      tabs: {
+        ...tabs,
+        [tabId]: {
+          ...tabs[tabId],
+          code,
+          filename,
+          svg,
+          errors,
+          isDirty: false
+        }
+      }
+    });
+  };
+
   handleChange = code => {
     const { tabs, activeTabId } = this.state;
+    if (code === tabs[activeTabId].code) {
+      return;
+    }
 
     ipcRenderer.send(SOURCE_CHANGED, { tabId: activeTabId, code });
 
@@ -161,6 +182,7 @@ class AppComponent extends React.Component {
       <IPC
         {...{
           [NEW_TAB]: this.handleNewTab,
+          [OPEN_FILE]: this.handleOpenFile,
           [RENDER_RESULT]: this.handleRender,
           [SAVE_DOT_FILE]: this.handleSave,
           [SAVE_COMPLETED]: this.handleSaveCompleted

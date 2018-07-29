@@ -1,10 +1,19 @@
-import { SAVE_BUFFER, SAVE_DOT_FILE } from "../../constants/messages";
-import showSaveDialog from '../dialogs/save';
+import {
+  OPEN_FILE,
+  SAVE_BUFFER,
+  SAVE_DOT_FILE
+} from "../../constants/messages";
+import showSaveDialog from "../dialogs/save";
 
 function fileMenu(emit) {
   return {
     label: "File",
     submenu: [
+      {
+        label: "Open...",
+        accelerator: "CmdOrCtrl+O",
+        click: emit(OPEN_FILE)
+      },
       {
         label: "Save",
         accelerator: "CmdOrCtrl+S",
@@ -14,7 +23,7 @@ function fileMenu(emit) {
         label: "Save As...",
         accelerator: "CmdOrCtrl+Shift+S",
         click: async (...args) => {
-          const filename = await showSaveDialog('Save As');
+          const filename = await showSaveDialog("Save As");
           filename && emit(SAVE_DOT_FILE, { filename })(...args);
         }
       },

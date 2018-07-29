@@ -1,17 +1,8 @@
 import { dialog } from "electron";
+import filters from "./file-filters";
 
 export default function showSaveDialog(title) {
   return new Promise(resolve => {
-    return dialog.showSaveDialog(
-      {
-        title,
-        filters: [
-          {
-            name: "DOT files",
-            extensions: ["dot"]
-          },
-          { name: "All Files", extensions: ["*"] }
-        ]
-      }, resolve);
+    return dialog.showSaveDialog({ title, filters }, resolve);
   });
 }

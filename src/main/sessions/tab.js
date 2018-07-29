@@ -11,9 +11,11 @@ import { dialog, ipcMain } from "electron";
 
 import SessionManager from "./session-manager";
 import renderSvg from "../../utils/render-svg";
+import readFile from "../fs/read-file";
 import writeFile from "../fs/write-file";
 import {
   NEW_TAB,
+  OPEN_FILE,
   RENDER_RESULT,
   SAVE_COMPLETED,
   SOURCE_CHANGED
@@ -79,6 +81,23 @@ class TabSession extends SessionManager {
 
   setIsActive(isActive) {
     this.isActive = isActive;
+  }
+
+  async open(filename) {
+    this.filename = filename;
+    this.code = await readFile(filename, 'utf8');
+    this.isDirty = false;
+
+    const { svg, errors } = await renderSvg({ code: this.code });
+    this.svg = svg;
+    this.errors = errors;
+
+    this.sendTabEvent(OPEN_FILE, {
+      filename,
+      code: this.code,
+      svg,
+      errors
+    });
   }
 
   async save() {

@@ -12,6 +12,7 @@ export const RENDER_RESULT = 'RENDER_RESULT';
 export const DECREASE_FONT = 'DECREASE_FONT';
 export const INCREASE_FONT = 'INCREASE_FONT';
 
+export const OPEN_FILE = 'OPEN_FILE';
 export const SAVE_BUFFER = 'SAVE_BUFFER';
 export const SAVE_DOT_FILE = 'SAVE_DOT_FILE';
 export const SAVE_COMPLETED = 'SAVE_COMPLETED';
