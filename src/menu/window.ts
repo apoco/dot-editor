@@ -1,6 +1,6 @@
-import { CLOSE_TAB, NEW_TAB, NEW_WINDOW } from "../constants/messages";
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 import Emitter from "./emitter";
+import { MenuEvent } from "../events/menu";
 
 export default function windowMenu(emit: Emitter): MenuItemConstructorOptions {
   return {
@@ -9,18 +9,18 @@ export default function windowMenu(emit: Emitter): MenuItemConstructorOptions {
       {
         label: 'New Tab',
         accelerator: "CmdOrCtrl+T",
-        click: emit(NEW_TAB)
+        click: emit(MenuEvent.NewTab)
       },
       {
         label: 'Close Tab',
         accelerator: "CmdOrCtrl+W",
-        click: emit(CLOSE_TAB)
+        click: emit(MenuEvent.CloseTab)
       },
       { type: 'separator' },
       {
         label: "New Window",
         accelerator: "CmdOrCtrl+N",
-        click: emit(NEW_WINDOW)
+        click: emit(MenuEvent.NewWindow)
       },
       { role: "minimize" }
     ]

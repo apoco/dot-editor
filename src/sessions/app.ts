@@ -1,10 +1,11 @@
 import createMenu from "../menu/index";
 import SessionManager from "./session-manager";
-import { NEW_WINDOW, OPEN_FILE, WINDOW_CLOSED } from "../constants/messages";
 import showOpenDialog from "../dialogs/open";
 import WindowSession from "./window";
+import { MenuEvent } from "../events/menu";
 import EventEmitter = NodeJS.EventEmitter;
 import BrowserWindow = Electron.BrowserWindow;
+import { WINDOW_CLOSED } from "../events/server";
 
 class AppSession extends SessionManager {
   menu: EventEmitter;
@@ -16,8 +17,8 @@ class AppSession extends SessionManager {
     this.menu = createMenu();
     this.openWindow();
 
-    this.subscribeToMenuEvent(NEW_WINDOW, this.openWindow);
-    this.subscribeToMenuEvent(OPEN_FILE, this.showOpenDialog);
+    this.subscribeToMenuEvent(MenuEvent.NewWindow, this.openWindow);
+    this.subscribeToMenuEvent(MenuEvent.OpenFile, this.showOpenDialog);
   }
 
   openWindow = () => {
@@ -55,7 +56,10 @@ class AppSession extends SessionManager {
     delete this.windowSessions[windowSession.id];
   }
 
-  subscribeToMenuEvent<T>(eventName: string, handler: (event: T) => void) {
+  subscribeToMenuEvent(
+    eventName: MenuEvent,
+    handler: (event: { browserWindow: BrowserWindow }) => void
+  ) {
     return this.subscribeToEvent(this.menu, eventName, handler);
   }
 }

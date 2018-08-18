@@ -3,16 +3,6 @@ import { ipcRenderer } from "electron";
 import classNames = require("classnames");
 import { v4 as uuid } from "uuid";
 
-import {
-  NEW_TAB,
-  RENDER_RESULT,
-  SOURCE_CHANGED,
-  WINDOW_READY,
-  SET_ACTIVE_TAB,
-  SAVE_COMPLETED,
-  OPEN_FILE,
-  CLOSE_TAB
-} from "../constants/messages";
 import Editor from "./editor";
 import Diagram from "./diagram";
 import prefs, { EDITOR_WIDTH } from "../prefs/index";
@@ -21,6 +11,22 @@ import TabStrip from "./tab-strip";
 import Tab from "../model/tab";
 import { Annotation } from "react-ace";
 import { PointerEventHandler } from "react";
+import {
+  ACTIVE_TAB_SET,
+  FILE_OPENED,
+  FILE_SAVED,
+  TAB_CREATED,
+  RENDER_ATTEMPTED,
+  TAB_CLOSED
+} from "../events/server";
+import {
+  ClientTabEvents,
+  ClientWindowEvents,
+  SOURCE_CHANGED,
+  TAB_SELECTED,
+  WINDOW_READY
+} from "../events/client";
+import { WindowEvent } from "../events/window";
 
 const lineNumRegex = /\bline (\d+)/;
 
@@ -60,10 +66,10 @@ class AppComponent extends React.Component<Props, State> {
   }
 
   componentDidMount() {
-    this.sendWindowEvent(WINDOW_READY);
+    this.sendWindowEvent(WINDOW_READY, {});
   }
 
-  handleNewTab = (tab: Tab & { windowId: string }) => {
+  handleNewTab = (tab: Tab & WindowEvent) => {
     const { windowId, tabId } = tab;
 
     if (windowId !== this.windowId) {
@@ -142,10 +148,24 @@ class AppComponent extends React.Component<Props, State> {
       activeTabId: newActiveTabId
     });
 
-    this.sendWindowEvent(SET_ACTIVE_TAB, { tabId: newActiveTabId });
+    if (newActiveTabId) {
+      this.sendWindowEvent(TAB_SELECTED, { tabId: newActiveTabId });
+    }
   };
 
-  handleOpenFile = ({ tabId, code, filename, svg, errors }: Tab) => {
+  handleOpenFile = ({
+    tabId,
+    code,
+    filename,
+    svg,
+    errors
+  }: {
+    tabId: string;
+    code: string | null;
+    filename: string;
+    svg: string | null;
+    errors: string | null;
+  }) => {
     const { tabs } = this.state;
 
     this.setState({
@@ -183,7 +203,15 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleRender = ({ tabId, svg, errors }: Tab) => {
+  handleRender = ({
+    tabId,
+    svg,
+    errors
+  }: {
+    tabId: string;
+    svg: string | null;
+    errors: string | null;
+  }) => {
     const { tabs } = this.state;
 
     this.setState({
@@ -197,7 +225,13 @@ class AppComponent extends React.Component<Props, State> {
     });
   };
 
-  handleSaveCompleted = async ({ filename, tabId }: Tab) => {
+  handleSaveCompleted = async ({
+    filename,
+    tabId
+  }: {
+    filename: string;
+    tabId: string;
+  }) => {
     const { tabs } = this.state;
 
     this.setState({
@@ -261,7 +295,7 @@ class AppComponent extends React.Component<Props, State> {
       activeTabId: tabId
     });
 
-    this.sendWindowEvent(SET_ACTIVE_TAB, { tabId });
+    this.sendWindowEvent(TAB_SELECTED, { tabId });
   };
 
   parseErrors(errors: string | null): Array<Annotation> {
@@ -276,17 +310,24 @@ class AppComponent extends React.Component<Props, State> {
     });
   }
 
-  sendWindowEvent<T>(eventName: string, payload?: T) {
+  sendWindowEvent<T extends keyof ClientWindowEvents>(
+    eventName: T,
+    payload: ClientWindowEvents[T]
+  ) {
     return ipcRenderer.send(
       eventName,
       Object.assign({}, payload, { windowId: this.windowId })
     );
   }
 
-  sendTabEvent<T>(eventName: string, payload?: T) {
-    return this.sendWindowEvent(
+  sendTabEvent<T extends keyof ClientTabEvents>(
+    eventName: T,
+    payload: ClientTabEvents[T]
+  ) {
+    return ipcRenderer.send(
       eventName,
       Object.assign({}, payload, {
+        windowId: this.windowId,
         tabId: this.state.activeTabId
       })
     );
@@ -296,12 +337,12 @@ class AppComponent extends React.Component<Props, State> {
     return (
       <IPC
         handlers={{
-          [NEW_TAB]: this.handleNewTab,
-          [OPEN_FILE]: this.handleOpenFile,
-          [RENDER_RESULT]: this.handleRender,
-          [SAVE_COMPLETED]: this.handleSaveCompleted,
-          [CLOSE_TAB]: this.handleCloseTab,
-          [SET_ACTIVE_TAB]: this.handleTabActivation
+          [TAB_CREATED]: this.handleNewTab,
+          [FILE_OPENED]: this.handleOpenFile,
+          [RENDER_ATTEMPTED]: this.handleRender,
+          [FILE_SAVED]: this.handleSaveCompleted,
+          [TAB_CLOSED]: this.handleCloseTab,
+          [ACTIVE_TAB_SET]: this.handleTabActivation
         }}
       />
     );
@@ -329,7 +370,7 @@ class AppComponent extends React.Component<Props, State> {
             key={`editor-${tabId}`}
             name={`editor-${tabId}`}
             isActive={tabId === activeTabId}
-            value={code}
+            value={code || ''}
             annotations={this.parseErrors(errors)}
             width={editorWidth}
             onChange={this.handleChange}
@@ -361,7 +402,7 @@ class AppComponent extends React.Component<Props, State> {
           <Diagram
             key={`diagram-${tabId}`}
             className={classNames("diagram", { active: tabId === activeTabId })}
-            svg={svg}
+            svg={svg || ''}
           />
         ))}
       </div>

@@ -1,10 +1,13 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
+import { ServerEvents } from "../events/server";
+
+export type EventHandlers = {
+  [K in keyof ServerEvents]?: (event: ServerEvents[K]) => void
+};
 
 type Props = {
-  handlers: {
-    [message: string]: (event: any) => any;
-  };
+  handlers: EventHandlers;
 };
 
 class IPC extends React.Component<Props, {}> {
@@ -20,8 +23,14 @@ class IPC extends React.Component<Props, {}> {
     });
   }
 
-  forEachChannel(cb: (keyValue: [string, (event: any) => any]) => void) {
-    Object.entries(this.props.handlers).forEach(cb);
+  forEachChannel(
+    cb: (keyValue: [keyof ServerEvents, (event: Object) => void]) => void
+  ) {
+    const keys = Object.keys(this.props.handlers) as Array<keyof ServerEvents>;
+    keys.forEach(key => {
+      const handler = this.props.handlers[key] as (event: Object) => void;
+      cb([key, handler]);
+    });
   }
 
   render(): null {

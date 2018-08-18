@@ -1,6 +1,6 @@
-import { DECREASE_FONT, INCREASE_FONT } from "../constants/messages";
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 import Emitter from "./emitter";
+import { MenuEvent } from "../events/menu";
 
 export default function viewMenu(emit: Emitter): MenuItemConstructorOptions {
   return {
@@ -9,12 +9,12 @@ export default function viewMenu(emit: Emitter): MenuItemConstructorOptions {
       {
         label: "Increase Font Size",
         accelerator: "CmdOrCtrl+Plus",
-        click: emit(INCREASE_FONT)
+        click: emit(MenuEvent.IncreaseFont)
       },
       {
         label: "Decrease Font Size",
         accelerator: "CmdOrCtrl+-",
-        click: emit(DECREASE_FONT)
+        click: emit(MenuEvent.DecreaseFont)
       },
       { type: "separator" },
       { role: "forceReload" },

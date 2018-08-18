@@ -1,6 +1,5 @@
-import { fromEvent } from "rxjs";
+import { fromEvent, Observable } from "rxjs";
 import {
-  catchError,
   debounceTime,
   filter,
   flatMap,
@@ -10,23 +9,24 @@ import {
 import { dialog, ipcMain } from "electron";
 
 import SessionManager from "./session-manager";
-import renderSvg from "../utils/render-svg";
+import renderSvg, { RenderResult } from "../utils/render-svg";
 import readFile from "../fs/read-file";
 import writeFile from "../fs/write-file";
-import {
-  CLOSE_TAB,
-  NEW_TAB,
-  OPEN_FILE,
-  RENDER_RESULT,
-  SAVE_COMPLETED,
-  SET_ACTIVE_TAB,
-  SOURCE_CHANGED
-} from "../constants/messages";
 import showSaveDialog from "../dialogs/save";
 import unsavedChangesPrompt from "../dialogs/unsaved-changes";
 import { CANCEL, YES } from "../dialogs/buttons";
 import BrowserWindow = Electron.BrowserWindow;
 import WebContents = Electron.WebContents;
+import {
+  ACTIVE_TAB_SET,
+  FILE_OPENED,
+  TAB_CREATED,
+  RENDER_ATTEMPTED,
+  ServerTabEvents,
+  FILE_SAVED, TAB_CLOSED
+} from "../events/server";
+import { ClientTabEvents, SOURCE_CHANGED } from "../events/client";
+import { TabEvent } from "../events/tab";
 
 type TabSessionOpts = {
   windowId: string;
@@ -39,7 +39,7 @@ export default class TabSession extends SessionManager {
   webContents: WebContents;
 
   code = "";
-  svg: string = "";
+  svg: string | null = null;
   errors = "";
   filename: string | null = null;
   isDirty = false;
@@ -52,7 +52,7 @@ export default class TabSession extends SessionManager {
     this.windowId = windowId;
     this.webContents = window.webContents;
 
-    this.sendTabEvent(NEW_TAB, {
+    this.sendTabEvent(TAB_CREATED, {
       code: this.code,
       svg: this.svg,
       errors: this.errors,
@@ -67,21 +67,25 @@ export default class TabSession extends SessionManager {
           this.code = code;
         }),
         debounceTime(5),
-        flatMap(renderSvg),
-        catchError(err => [{ errors: err.message }])
+        flatMap(renderSvg)
       ),
-      result => this.sendTabEvent(RENDER_RESULT, result)
+      (result: RenderResult) => this.sendTabEvent(RENDER_ATTEMPTED, result)
     );
   }
 
-  tabEvents<T extends { tabId: string }>(eventName: string) {
+  tabEvents<T extends keyof ClientTabEvents>(
+    eventName: T
+  ): Observable<ClientTabEvents[T]> {
     return fromEvent(ipcMain, eventName).pipe(
       map(([e, payload]: [Event, T]) => payload),
-      filter(({ tabId }) => tabId === this.id)
+      filter((payload: TabEvent) => payload.tabId === this.id)
     );
   }
 
-  sendTabEvent<T extends object>(eventName: string, payload?: T) {
+  sendTabEvent<T extends keyof ServerTabEvents>(
+    eventName: T,
+    payload: ServerTabEvents[T]
+  ) {
     return this.webContents.send(
       eventName,
       Object.assign({}, payload, {
@@ -95,7 +99,7 @@ export default class TabSession extends SessionManager {
     this.isActive = isActive;
 
     if (isActive) {
-      this.sendTabEvent(SET_ACTIVE_TAB);
+      this.sendTabEvent(ACTIVE_TAB_SET, {});
     }
   }
 
@@ -105,10 +109,10 @@ export default class TabSession extends SessionManager {
     this.isDirty = false;
 
     const { svg, errors } = await renderSvg({ code: this.code });
-    this.svg = svg || "";
+    this.svg = svg || null;
     this.errors = errors;
 
-    this.sendTabEvent(OPEN_FILE, {
+    this.sendTabEvent(FILE_OPENED, {
       filename,
       code: this.code,
       svg,
@@ -116,25 +120,30 @@ export default class TabSession extends SessionManager {
     });
   }
 
-  async save() {
+  async save(): Promise<boolean> {
     try {
       if (!this.filename) {
-        const selectedFile = await showSaveDialog("Save As");
-        if (!selectedFile) {
-          return false;
-        }
-
-        this.filename = selectedFile;
+        return this.saveAs();
       }
 
       await writeFile(this.filename, this.code);
       this.isDirty = false;
-      await this.sendTabEvent(SAVE_COMPLETED, { filename: this.filename });
+      await this.sendTabEvent(FILE_SAVED, { filename: this.filename });
       return true;
     } catch (err) {
       dialog.showErrorBox("Error saving", `Could not save file.\n${err.stack}`);
       return false;
     }
+  }
+
+  async saveAs() {
+    const selectedFile = await showSaveDialog("Save As");
+    if (!selectedFile) {
+      return false;
+    }
+
+    this.filename = selectedFile;
+    return this.save();
   }
 
   async close() {
@@ -150,8 +159,8 @@ export default class TabSession extends SessionManager {
       }
     }
 
-    await this.sendTabEvent(CLOSE_TAB);
-    this.emit(CLOSE_TAB);
+    await this.sendTabEvent(TAB_CLOSED, {});
+    this.emit(TAB_CLOSED);
     this.dispose();
     return true;
   }

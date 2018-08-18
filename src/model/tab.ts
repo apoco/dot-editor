@@ -1,9 +1,9 @@
 type Tab = {
   tabId: string,
-  filename: string,
-  code: string,
+  filename: string | null,
+  code: string | null,
   errors: string | null,
-  svg: string,
+  svg: string | null,
   isDirty: boolean
 };
 

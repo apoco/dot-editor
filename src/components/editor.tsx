@@ -5,8 +5,8 @@ import "brace/theme/github";
 import classNames from "classnames";
 
 import prefs, { EDITOR_FONT_SIZE } from "../prefs/index";
-import { DECREASE_FONT, INCREASE_FONT } from "../constants/messages";
 import IPC from "./ipc";
+import { DECREASE_FONT, INCREASE_FONT } from "../events/server";
 
 const MIN_FONT_SIZE = 0;
 const MAX_FONT_SIZE = 100;

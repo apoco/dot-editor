@@ -1,21 +1,20 @@
+import { Subscription } from "rxjs";
 import { filter } from "rxjs/operators";
 import { BrowserWindow, ipcMain } from "electron";
 
-import {
-  CLOSE_TAB,
-  DECREASE_FONT,
-  INCREASE_FONT,
-  NEW_TAB,
-  SAVE_BUFFER,
-  SET_ACTIVE_TAB,
-  WINDOW_CLOSED,
-  WINDOW_READY
-} from "../constants/messages";
 import SessionManager from "./session-manager";
 import TabSession from "./tab";
+import { ClientEvents, TAB_SELECTED, WINDOW_READY } from "../events/client";
+import {
+  DECREASE_FONT,
+  INCREASE_FONT,
+  ServerWindowEvents,
+  TAB_CLOSED,
+  WINDOW_CLOSED
+} from "../events/server";
+import { MenuEvent } from "../events/menu";
 import EventEmitter = NodeJS.EventEmitter;
 import WebContents = Electron.WebContents;
-import { Subscription } from "rxjs";
 
 type WindowSessionOpts = {
   menu: EventEmitter;
@@ -42,13 +41,16 @@ class WindowSession extends SessionManager {
       this.webContents.setLayoutZoomLevelLimits(0, 0);
     });
 
-    this.handleIPCEvent(WINDOW_READY, ({ windowId }: { windowId: string }) => {
-      this.windowId = windowId;
-      this.openTab();
-    });
+    this.handleClientEvent(
+      WINDOW_READY,
+      ({ windowId }: { windowId: string }) => {
+        this.windowId = windowId;
+        this.openTab();
+      }
+    );
 
-    this.handleIPCEvent(
-      SET_ACTIVE_TAB,
+    this.handleClientEvent(
+      TAB_SELECTED,
       ({ windowId, tabId }: { windowId: string; tabId: string }) =>
         windowId === this.windowId && this.setActiveTab(tabId)
     );
@@ -62,16 +64,17 @@ class WindowSession extends SessionManager {
   }
 
   setupMenuListeners() {
-    this.handleMenuEvent(NEW_TAB, this.openTab);
-    this.handleMenuEvent(CLOSE_TAB, this.closeTab);
+    this.handleMenuEvent(MenuEvent.NewTab, this.openTab);
+    this.handleMenuEvent(MenuEvent.CloseTab, this.closeTab);
 
-    this.handleMenuEvent(SAVE_BUFFER, this.saveActiveBuffer);
+    this.handleMenuEvent(MenuEvent.SaveFile, this.saveActiveBuffer);
+    this.handleMenuEvent(MenuEvent.SaveFileAs, this.saveActiveBufferAs);
 
-    this.handleMenuEvent(INCREASE_FONT, () =>
-      this.webContents.send(INCREASE_FONT)
+    this.handleMenuEvent(MenuEvent.IncreaseFont, () =>
+      this.sendEvent(INCREASE_FONT, {})
     );
-    this.handleMenuEvent(DECREASE_FONT, () =>
-      this.webContents.send(DECREASE_FONT)
+    this.handleMenuEvent(MenuEvent.DecreaseFont, () =>
+      this.sendEvent(DECREASE_FONT, {})
     );
   }
 
@@ -88,7 +91,7 @@ class WindowSession extends SessionManager {
     this.setActiveTab(tabSession.id);
 
     this.tabSubscriptions[tabSession.id] = [
-      this.subscribeToEvent(tabSession, CLOSE_TAB, () =>
+      this.subscribeToEvent(tabSession, TAB_CLOSED, () =>
         this.handleTabClosed(tabSession.id)
       )
     ];
@@ -135,6 +138,11 @@ class WindowSession extends SessionManager {
     return activeTab && activeTab.save();
   };
 
+  saveActiveBufferAs = () => {
+    const activeTab = this.activeTabSession;
+    return activeTab && activeTab.saveAs();
+  };
+
   closeAllTabs = async ({ event }: { event: Event }) => {
     if (!Object.values(this.tabSessions).length) {
       return; // Close normally
@@ -158,7 +166,7 @@ class WindowSession extends SessionManager {
     return Object.values(this.tabSessions).some(t => t.filename === filename);
   }
 
-  handleMenuEvent<T>(eventName: string, handler: (event: T) => void) {
+  handleMenuEvent(eventName: MenuEvent, handler: () => void) {
     return this.subscribeTo(
       this.eventsFrom(this.menu, eventName).pipe(
         filter(({ browserWindow }) => browserWindow === this.window)
@@ -167,12 +175,25 @@ class WindowSession extends SessionManager {
     );
   }
 
-  handleIPCEvent<T>(eventName: string, handler: (event: T) => void) {
+  handleClientEvent<T extends keyof ClientEvents>(
+    eventName: T,
+    handler: (event: ClientEvents[T]) => void
+  ) {
     return this.subscribeTo(
       this.eventsFrom(ipcMain, eventName).pipe(
         filter(({ event }) => event.sender === this.webContents)
       ),
       handler
+    );
+  }
+
+  sendEvent<T extends keyof ServerWindowEvents>(
+    eventName: T,
+    payload: ServerWindowEvents[T]
+  ) {
+    return this.webContents.send(
+      eventName,
+      Object.assign({}, payload, { windowId: this.id })
     );
   }
 

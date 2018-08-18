@@ -1,15 +1,14 @@
 import { spawn } from "child_process";
 
 import createStringStream from "./string-stream";
-import ExecutionError from "../errors/execution";
 
 type RenderOpts = { code: string };
-type RenderResult = { svg?: string; errors: string };
+export type RenderResult = { svg: string | null; errors: string };
 
 export default async function renderSvg({
   code
 }: RenderOpts): Promise<RenderResult> {
-  return new Promise<RenderResult>((resolve, reject) => {
+  return new Promise<RenderResult>(resolve => {
     const outputChunks: Array<string | Buffer> = [];
     const errChunks: Array<string | Buffer> = [];
 
@@ -17,11 +16,12 @@ export default async function renderSvg({
 
     proc
       .once("error", err => {
-        reject(new ExecutionError("Failed to render SVG", err));
+        resolve({ svg: null, errors: err.message });
       })
       .once("exit", code => {
         if (code) {
           return void resolve({
+            svg: null,
             errors: errChunks.join("")
           });
         }
