@@ -70,7 +70,9 @@ export default class Editor extends React.PureComponent<Props, State> {
           height="100%"
           fontSize={this.state.fontSize}
           focus={isActive}
-          debounceChangePeriod={500}
+          setOptions={{
+            debounceChangePeriod: 500
+          }}
           annotations={annotations}
           value={value}
           onChange={onChange}
