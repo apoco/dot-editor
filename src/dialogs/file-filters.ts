@@ -1,7 +1,7 @@
 export default [
   {
     name: "DOT files",
-    extensions: ["dot"]
+    extensions: ["gv", "dot"]
   },
   { name: "All Files", extensions: ["*"] }
 ];
