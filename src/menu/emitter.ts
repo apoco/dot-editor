@@ -1,6 +1,6 @@
 import MenuItem = Electron.MenuItem;
 import BrowserWindow = Electron.BrowserWindow;
-import { MenuEvent } from "../events/menu";
+import { MenuEvent } from "../events/menu-events";
 
 type Emitter = (
   eventType: MenuEvent

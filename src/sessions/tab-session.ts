@@ -24,9 +24,10 @@ import {
   RENDER_ATTEMPTED,
   ServerTabEvents,
   FILE_SAVED, TAB_CLOSED
-} from "../events/server";
-import { ClientTabEvents, SOURCE_CHANGED } from "../events/client";
-import { TabEvent } from "../events/tab";
+} from "../events/server-events";
+import { ClientTabEvents, SOURCE_CHANGED } from "../events/client-events";
+import { TabEvent } from "../events/tab-events";
+import exportImage from "../utils/export";
 
 type TabSessionOpts = {
   windowId: string;
@@ -144,6 +145,10 @@ export default class TabSession extends SessionManager {
 
     this.filename = selectedFile;
     return this.save();
+  }
+
+  export({ filename, format }: { filename: string, format: string }) {
+    return exportImage({ code: this.code, filename, format });
   }
 
   async close() {

@@ -1,6 +1,6 @@
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 import Emitter from "./emitter";
-import { MenuEvent } from "../events/menu";
+import { MenuEvent } from "../events/menu-events";
 
 export default function windowMenu(emit: Emitter): MenuItemConstructorOptions {
   return {

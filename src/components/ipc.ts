@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
-import { ServerEvents } from "../events/server";
+import { ServerEvents } from "../events/server-events";
 
 export type EventHandlers = {
   [K in keyof ServerEvents]?: (event: ServerEvents[K]) => void

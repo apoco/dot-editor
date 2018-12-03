@@ -1,7 +1,7 @@
 import Tab from "../model/tab";
-import { TabEvent } from "./tab";
+import { TabEvent } from "./tab-events";
 import { RenderResult } from "../utils/render-svg";
-import { WindowEvent } from "./window";
+import { WindowEvent } from "./window-events";
 
 export const FILE_OPENED = "FILE_OPENED";
 export const TAB_CREATED = "TAB_CREATED";
@@ -12,6 +12,8 @@ export const FILE_SAVED = "FILE_SAVED";
 export const WINDOW_CLOSED = "WINDOW_CLOSED";
 export const INCREASE_FONT = "INCREASE_FONT";
 export const DECREASE_FONT = "DECREASE_FONT";
+export const SET_EXPORT_DEFAULTS = 'SET_EXPORT_DEFAULTS';
+export const SET_EXPORT_FILENAME = 'SET_EXPORT_FILENAME';
 
 export type ServerWindowEvents = {
   [WINDOW_CLOSED]: {};
@@ -35,7 +37,18 @@ export type ServerTabEvents = {
   };
 };
 
-export type ServerEvents = {
-  [K in keyof ServerWindowEvents]: WindowEvent & ServerWindowEvents[K]
-} &
-  { [K in keyof ServerTabEvents]: TabEvent & ServerTabEvents[K] };
+export type ServerExportEvents = {
+  [SET_EXPORT_FILENAME]: {
+    filename: string;
+  };
+  [SET_EXPORT_DEFAULTS]: {
+    sourceFilename: string,
+    format: string,
+    extension: string
+  }
+};
+
+export type ServerEvents =
+  { [K in keyof ServerWindowEvents]: WindowEvent & ServerWindowEvents[K] } &
+  { [K in keyof ServerTabEvents]: TabEvent & ServerTabEvents[K] } &
+  { [K in keyof ServerExportEvents]: ServerExportEvents[K] };

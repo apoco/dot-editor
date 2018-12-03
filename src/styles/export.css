@@ -1,0 +1,54 @@
+.export-options {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1em;
+
+  display: grid;
+  grid-template-rows: min-content min-content 1fr min-content;
+  grid-template-columns: min-content 1fr min-content;
+  column-gap: 0.75em;
+  row-gap: 0.5em;
+}
+
+label[for="filename"] {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+#filename {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+#browse-btn {
+  grid-row: 1;
+  grid-column: 3;
+}
+
+label[for="format"] {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+#format {
+  grid-row: 2;
+  grid-column: 2 / 4;
+}
+
+#options {
+  grid-row: 3;
+  grid-column: 2 / 4;
+}
+
+#buttons {
+  grid-row: 4;
+  grid-column: 1 / 4;
+  text-align: right;
+}
+
+#ok-btn {
+  margin-right: 0.5em;
+}

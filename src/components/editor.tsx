@@ -1,12 +1,12 @@
 import * as React from "react";
 import AceEditor, { Annotation } from "react-ace";
+import classNames from "classnames";
+import prefs, { EDITOR_FONT_SIZE } from "../prefs";
+import IPC from "./ipc";
+import { DECREASE_FONT, INCREASE_FONT } from "../events/server-events";
+
 import "brace/mode/dot";
 import "brace/theme/github";
-import classNames from "classnames";
-
-import prefs, { EDITOR_FONT_SIZE } from "../prefs/index";
-import IPC from "./ipc";
-import { DECREASE_FONT, INCREASE_FONT } from "../events/server";
 
 const MIN_FONT_SIZE = 0;
 const MAX_FONT_SIZE = 100;

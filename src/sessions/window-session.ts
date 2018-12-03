@@ -3,18 +3,24 @@ import { filter } from "rxjs/operators";
 import { BrowserWindow, ipcMain } from "electron";
 
 import SessionManager from "./session-manager";
-import TabSession from "./tab";
-import { ClientEvents, TAB_SELECTED, WINDOW_READY } from "../events/client";
+import TabSession from "./tab-session";
+import {
+  ClientEvents,
+  TAB_SELECTED,
+  WINDOW_READY
+} from "../events/client-events";
 import {
   DECREASE_FONT,
   INCREASE_FONT,
   ServerWindowEvents,
   TAB_CLOSED,
   WINDOW_CLOSED
-} from "../events/server";
-import { MenuEvent } from "../events/menu";
+} from "../events/server-events";
+import { MenuEvent } from "../events/menu-events";
 import EventEmitter = NodeJS.EventEmitter;
 import WebContents = Electron.WebContents;
+import ExportDialogSession from "./export-session";
+import { EXPORT } from "../events/export-events";
 
 type WindowSessionOpts = {
   menu: EventEmitter;
@@ -27,6 +33,7 @@ class WindowSession extends SessionManager {
   windowId: string | null = null;
   tabSessions: { [sessionId: string]: TabSession } = {};
   tabSubscriptions: { [sessionId: string]: Array<Subscription> } = {};
+  exportSession: ExportDialogSession | null = null;
 
   constructor({ menu }: WindowSessionOpts) {
     super();
@@ -69,6 +76,8 @@ class WindowSession extends SessionManager {
 
     this.handleMenuEvent(MenuEvent.SaveFile, this.saveActiveBuffer);
     this.handleMenuEvent(MenuEvent.SaveFileAs, this.saveActiveBufferAs);
+
+    this.handleMenuEvent(MenuEvent.Export, this.openExportDialog);
 
     this.handleMenuEvent(MenuEvent.IncreaseFont, () =>
       this.sendEvent(INCREASE_FONT, {})
@@ -141,6 +150,41 @@ class WindowSession extends SessionManager {
   saveActiveBufferAs = () => {
     const activeTab = this.activeTabSession;
     return activeTab && activeTab.saveAs();
+  };
+
+  openExportDialog = () => {
+    const tab = this.activeTabSession;
+    if (tab && tab.filename) {
+      const exportSession = new ExportDialogSession({
+        parentWindow: this.window,
+        filename: tab.filename
+      });
+      this.subscribeToEvent(exportSession, EXPORT, this.handleExport);
+      this.subscribeToEvent(
+        exportSession,
+        WINDOW_CLOSED,
+        this.handleExportClose
+      );
+      this.exportSession = exportSession;
+    }
+  };
+
+  handleExport = async (e: { event: { filename: string; format: string } }) => {
+    try {
+      if (this.activeTabSession) {
+        await this.activeTabSession.export(e.event);
+        this.handleExportClose();
+      }
+    } catch (err) {
+      this.exportSession && this.exportSession.showError(err);
+    }
+  };
+
+  handleExportClose = () => {
+    if (this.exportSession) {
+      this.exportSession.close();
+      this.exportSession = null;
+    }
   };
 
   closeAllTabs = async ({ event }: { event: Event }) => {

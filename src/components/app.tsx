@@ -18,15 +18,15 @@ import {
   TAB_CREATED,
   RENDER_ATTEMPTED,
   TAB_CLOSED
-} from "../events/server";
+} from "../events/server-events";
 import {
   ClientTabEvents,
   ClientWindowEvents,
   SOURCE_CHANGED,
   TAB_SELECTED,
   WINDOW_READY
-} from "../events/client";
-import { WindowEvent } from "../events/window";
+} from "../events/client-events";
+import { WindowEvent } from "../events/window-events";
 
 const lineNumRegex = /\bline (\d+)/;
 

@@ -8,7 +8,7 @@ import windowMenu from "./window";
 import helpMenu from "./help";
 import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 import Emitter from "./emitter";
-import { MenuEvent } from "../events/menu";
+import { MenuEvent } from "../events/menu-events";
 
 function setupMenu() {
   const emitter = new EventEmitter();

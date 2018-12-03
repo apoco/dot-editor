@@ -1,11 +1,11 @@
 import createMenu from "../menu/index";
 import SessionManager from "./session-manager";
 import showOpenDialog from "../dialogs/open";
-import WindowSession from "./window";
-import { MenuEvent } from "../events/menu";
+import WindowSession from "./window-session";
+import { MenuEvent } from "../events/menu-events";
 import EventEmitter = NodeJS.EventEmitter;
 import BrowserWindow = Electron.BrowserWindow;
-import { WINDOW_CLOSED } from "../events/server";
+import { WINDOW_CLOSED } from "../events/server-events";
 
 class AppSession extends SessionManager {
   menu: EventEmitter;

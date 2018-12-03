@@ -1,5 +1,5 @@
-import { TabEvent } from "./tab";
-import { WindowEvent } from "./window";
+import { TabEvent } from "./tab-events";
+import { WindowEvent } from "./window-events";
 
 export const WINDOW_READY = 'WINDOW_READY';
 export const SOURCE_CHANGED = 'SOURCE_CHANGED';

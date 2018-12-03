@@ -3,6 +3,7 @@ import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 export default function editMenu(): MenuItemConstructorOptions {
   return {
     label: "Edit",
+    accelerator: "Alt+E",
     submenu: [
       { role: "undo" },
       { role: "redo" },
