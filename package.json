@@ -22,9 +22,9 @@
   "dependencies": {
     "classnames": "^2.2.6",
     "electron-store": "^2.0.0",
-    "react": "^16.4.1",
+    "react": "^16.7.0",
     "react-ace": "^6.2.0",
-    "react-dom": "^16.4.1",
+    "react-dom": "^16.7.0",
     "rxjs": "^6.2.2",
     "uuid": "^3.3.2"
   },
