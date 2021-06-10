@@ -26,7 +26,7 @@ class Diagram extends React.Component<Props, State> {
   };
 
   isDragging = false;
-  dragPointer = null;
+  dragPointer: number | null = null;
   dragX = null;
   dragY = null;
 

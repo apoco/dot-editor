@@ -4,6 +4,6 @@ import { MenuEvent } from "../events/menu-events";
 
 type Emitter = (
   eventType: MenuEvent
-) => (menuItem: MenuItem, window: BrowserWindow, event: Event) => void;
+) => (menuItem: MenuItem, window: BrowserWindow | undefined, event: Event) => void;
 
 export default Emitter;

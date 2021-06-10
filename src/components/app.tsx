@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ipcRenderer } from "electron";
-import classNames = require("classnames");
+import classNames from "classnames";
 import { v4 as uuid } from "uuid";
 
 import Editor from "./editor";
@@ -288,7 +288,7 @@ class AppComponent extends React.Component<Props, State> {
     prefs.set(EDITOR_WIDTH, newWidth);
   };
 
-  handleTabSelection = (tabId: string, e: MouseEvent) => {
+  handleTabSelection = (tabId: string, e: React.MouseEvent) => {
     e.preventDefault();
 
     this.setState({

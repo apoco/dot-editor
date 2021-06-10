@@ -1,6 +1,5 @@
+import React, { ChangeEventHandler } from "react";
 import OptionsPanel, { OptionsPanelProps } from "./options-panel";
-import React = require("react");
-import { ChangeEventHandler } from "react";
 
 type State = {
   isCompressed: boolean;

@@ -7,14 +7,14 @@ import TabSession from "./tab-session";
 import {
   ClientEvents,
   TAB_SELECTED,
-  WINDOW_READY
+  WINDOW_READY,
 } from "../events/client-events";
 import {
   DECREASE_FONT,
   INCREASE_FONT,
   ServerWindowEvents,
   TAB_CLOSED,
-  WINDOW_CLOSED
+  WINDOW_CLOSED,
 } from "../events/server-events";
 import { MenuEvent } from "../events/menu-events";
 import EventEmitter = NodeJS.EventEmitter;
@@ -39,13 +39,17 @@ class WindowSession extends SessionManager {
     super();
 
     this.menu = menu;
-    this.window = new BrowserWindow({ width: 800, height: 600 });
+    this.window = new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: { nodeIntegration: true },
+    });
     this.webContents = this.window.webContents;
 
     this.subscribeToEvent(this.webContents, "did-finish-load", () => {
       this.webContents.setZoomFactor(1);
       this.webContents.setVisualZoomLevelLimits(1, 1);
-      this.webContents.setLayoutZoomLevelLimits(0, 0);
+      // this.webContents.setLayoutZoomLevelLimits(0, 0);
     });
 
     this.handleClientEvent(
@@ -94,7 +98,7 @@ class WindowSession extends SessionManager {
 
     const tabSession = new TabSession({
       window: this.window,
-      windowId: this.windowId
+      windowId: this.windowId,
     });
     this.tabSessions[tabSession.id] = tabSession;
     this.setActiveTab(tabSession.id);
@@ -102,7 +106,7 @@ class WindowSession extends SessionManager {
     this.tabSubscriptions[tabSession.id] = [
       this.subscribeToEvent(tabSession, TAB_CLOSED, () =>
         this.handleTabClosed(tabSession.id)
-      )
+      ),
     ];
 
     return tabSession;
@@ -114,7 +118,7 @@ class WindowSession extends SessionManager {
   };
 
   handleTabClosed = (tabId: string) => {
-    this.tabSubscriptions[tabId].forEach(s => s.unsubscribe());
+    this.tabSubscriptions[tabId].forEach((s) => s.unsubscribe());
     delete this.tabSessions[tabId];
     delete this.tabSubscriptions[tabId];
   };
@@ -127,7 +131,7 @@ class WindowSession extends SessionManager {
 
   async openFile(filename: string) {
     const existingTab = Object.values(this.tabSessions).find(
-      t => t.filename === filename
+      (t) => t.filename === filename
     );
 
     if (existingTab) {
@@ -157,7 +161,7 @@ class WindowSession extends SessionManager {
     if (tab && tab.filename) {
       const exportSession = new ExportDialogSession({
         parentWindow: this.window,
-        filename: tab.filename
+        filename: tab.filename,
       });
       this.subscribeToEvent(exportSession, EXPORT, this.handleExport);
       this.subscribeToEvent(
@@ -203,11 +207,11 @@ class WindowSession extends SessionManager {
   };
 
   get activeTabSession(): TabSession | null {
-    return Object.values(this.tabSessions).find(s => s.isActive) || null;
+    return Object.values(this.tabSessions).find((s) => s.isActive) || null;
   }
 
   hasFileOpen(filename: string) {
-    return Object.values(this.tabSessions).some(t => t.filename === filename);
+    return Object.values(this.tabSessions).some((t) => t.filename === filename);
   }
 
   handleMenuEvent(eventName: MenuEvent, handler: () => void) {
@@ -244,7 +248,7 @@ class WindowSession extends SessionManager {
   dispose() {
     super.dispose();
 
-    Object.values(this.tabSessions).forEach(s => s.dispose());
+    Object.values(this.tabSessions).forEach((s) => s.dispose());
     this.tabSessions = {};
 
     this.emit(WINDOW_CLOSED);

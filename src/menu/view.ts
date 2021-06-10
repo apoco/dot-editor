@@ -19,7 +19,7 @@ export default function viewMenu(emit: Emitter): MenuItemConstructorOptions {
       },
       { type: "separator" },
       { role: "forceReload" },
-      { role: "toggledevtools" }
+      { role: "toggleDevTools" }
     ]
   };
 }

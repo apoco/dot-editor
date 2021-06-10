@@ -1,6 +1,6 @@
-import { shell } from "electron";
+import { MenuItemConstructorOptions, shell } from "electron";
 
-export default function helpMenu() {
+export default function helpMenu(): MenuItemConstructorOptions {
   return {
     role: "help",
     submenu: [

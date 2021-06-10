@@ -64,10 +64,13 @@ class ExportDialogSession extends SessionManager {
     });
   };
 
-  handleFileBrowse = (e: { filename: string }) => {
-    dialog.showSaveDialog(this.window, { defaultPath: e.filename }, filename =>
-      this.sendEvent(SET_EXPORT_FILENAME, { filename })
-    );
+  handleFileBrowse = async (e: { filename: string }) => {
+    const { filePath } = await dialog.showSaveDialog(this.window, {
+      defaultPath: e.filename
+    });
+    if (filePath) {
+      this.sendEvent(SET_EXPORT_FILENAME, { filename: filePath });
+    }
   };
 
   handleExport = (e: { filename: string; format: string }) => {

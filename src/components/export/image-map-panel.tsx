@@ -1,6 +1,5 @@
-import React = require("react");
+import React, { ChangeEventHandler } from "react";
 import OptionsPanel, { OptionsPanelProps } from "./options-panel";
-import { ChangeEventHandler } from "react";
 
 type ImageMapPanelState = {
   isClient: boolean;

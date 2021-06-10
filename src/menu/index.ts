@@ -6,7 +6,6 @@ import editMenu from "./edit";
 import viewMenu from "./view";
 import windowMenu from "./window";
 import helpMenu from "./help";
-import MenuItemConstructorOptions = Electron.MenuItemConstructorOptions;
 import Emitter from "./emitter";
 import { MenuEvent } from "../events/menu-events";
 

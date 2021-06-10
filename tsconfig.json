@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2017",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "target": "es2020",
     "sourceMap": true,
     "jsx": "react",
     "noImplicitAny": true,

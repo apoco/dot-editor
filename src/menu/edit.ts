@@ -11,9 +11,9 @@ export default function editMenu(): MenuItemConstructorOptions {
       { role: "cut" },
       { role: "copy" },
       { role: "paste" },
-      { role: "pasteandmatchstyle" },
+      { role: "pasteAndMatchStyle" },
       { role: "delete" },
-      { role: "selectall" }
+      { role: "selectAll" }
     ]
   };
 }
